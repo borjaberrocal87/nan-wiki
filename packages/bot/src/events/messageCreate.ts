@@ -6,6 +6,7 @@ import {
   TextChannel,
 } from 'discord.js';
 import { ButtonBuilder, ButtonStyle } from 'discord.js';
+import { client } from '../client.js';
 import { prisma } from '../services/db.js';
 import { detectUrls, DetectedUrl } from '../services/linkDetector.js';
 
@@ -48,6 +49,35 @@ function buildErrorEmbed(error: unknown): EmbedBuilder {
     .setTimestamp();
 }
 
+async function ensureUser(message: Message) {
+  await prisma.user.upsert({
+    where: { id: BigInt(message.author.id) },
+    create: {
+      id: BigInt(message.author.id),
+      username: message.author.username,
+      avatarUrl: message.author.avatar,
+      discriminator: message.author.discriminator,
+    },
+    update: {
+      username: message.author.username,
+      avatarUrl: message.author.avatar,
+      discriminator: message.author.discriminator,
+    },
+  });
+}
+
+async function ensureChannel(channelId: string, guildId: string, channelName: string) {
+  await prisma.channel.upsert({
+    where: { id: BigInt(channelId) },
+    create: {
+      id: BigInt(channelId),
+      name: channelName,
+      guildId: BigInt(guildId),
+    },
+    update: {},
+  });
+}
+
 async function saveLink(
   url: string,
   domain: string,
@@ -55,13 +85,18 @@ async function saveLink(
   message: Message
 ): Promise<boolean> {
   try {
+    await ensureUser(message);
+    if (message.channelId && message.guildId) {
+      const channelName = message.channel instanceof TextChannel ? message.channel.name : `channel-${message.channelId}`;
+      await ensureChannel(message.channelId, message.guildId, channelName);
+    }
     await prisma.link.create({
       data: {
         url,
         domain,
         source,
         rawContent: message.content.slice(0, 500),
-        authorId: message.author.id ? BigInt(message.author.id) : undefined,
+        authorId: BigInt(message.author.id),
         channelId: message.channelId ? BigInt(message.channelId) : undefined,
         discordMessageId: message.id ? BigInt(message.id) : undefined,
         discordChannelName:
@@ -138,3 +173,5 @@ export async function handleMessageCreate(message: Message): Promise<void> {
     `[LINK] Saved ${savedCount} link(s) from ${message.author.tag} in ${message.guildId}`
   );
 }
+
+client.on(Events.MessageCreate, handleMessageCreate);

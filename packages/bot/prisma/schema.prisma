@@ -16,6 +16,8 @@ model User {
   isAdmin     Boolean   @default(false) @map("is_admin")
   links       Link[]
   conversations ChatConversation[]
+
+  @@map("users")
 }
 
 model Channel {
@@ -25,6 +27,8 @@ model Channel {
   category    String?
   createdAt   DateTime? @map("created_at")
   links       Link[]
+
+  @@map("channels")
 }
 
 model Link {
@@ -45,13 +49,14 @@ model Link {
   description         String?   @db.Text
   tags                String[]  @default([])
   sourceDetected      String?   @map("source_detected")
-  embedding           Json?     @map("embedding") @db.Json
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
   @@index([source])
   @@index([postedAt(order: Desc)])
   @@index([domain])
+
+  @@map("links")
 }
 
 model ChatConversation {
@@ -61,6 +66,8 @@ model ChatConversation {
   sessionId String       @map("session_id") @db.Uuid
   createdAt DateTime     @default(now()) @map("created_at")
   messages  ChatMessage[]
+
+  @@map("chat_conversations")
 }
 
 model ChatMessage {
@@ -70,4 +77,6 @@ model ChatMessage {
   role           String
   content        String
   createdAt      DateTime         @default(now()) @map("created_at")
+
+  @@map("chat_messages")
 }

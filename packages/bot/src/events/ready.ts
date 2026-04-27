@@ -1,6 +1,6 @@
 import { client } from '../client.js';
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   console.log(`Bot is online as ${client.user?.tag}`);
 });
 
