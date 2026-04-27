@@ -1,8 +1,13 @@
+import Header from "../components/layout/Header";
+import LinkGrid from "../components/links/LinkGrid";
+
 export default function Home() {
   return (
-    <main>
-      <h1>Link Library</h1>
-      <p>Welcome to Link Library</p>
-    </main>
+    <div style={{ minHeight: "100vh" }}>
+      <Header />
+      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px" }}>
+        <LinkGrid />
+      </main>
+    </div>
   );
 }

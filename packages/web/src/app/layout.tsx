@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "Discover links shared by your community",
 };
 
+import Header from "../components/layout/Header";
+
 export default function RootLayout({
   children,
 }: {
@@ -13,7 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Header />
+        <main>{children}</main>
+      </body>
     </html>
   );
 }

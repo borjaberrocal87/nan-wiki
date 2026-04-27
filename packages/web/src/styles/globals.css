@@ -7,3 +7,109 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
+
+@layer components {
+  .link-card {
+    background-color: #111111;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+  }
+
+  .link-card:hover {
+    border-color: #333333;
+  }
+
+  .source-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  .source-github {
+    background-color: #232729;
+    color: #f0f6fc;
+  }
+
+  .source-twitter {
+    background-color: #1b95e020;
+    color: #1b95e0;
+  }
+
+  .source-youtube {
+    background-color: #ff000020;
+    color: #ff0000;
+  }
+
+  .source-twitch {
+    background-color: #9146ff20;
+    color: #9146ff;
+  }
+
+  .source-linkedin {
+    background-color: #0a66c220;
+    color: #0a66c2;
+  }
+
+  .source-reddit {
+    background-color: #ff450020;
+    color: #ff4500;
+  }
+
+  .source-medium {
+    background-color: #00ab4820;
+    color: #00ab48;
+  }
+
+  .source-blog {
+    background-color: #33333320;
+    color: #aaaaaa;
+  }
+
+  .source-other {
+    background-color: #33333320;
+    color: #aaaaaa;
+  }
+
+  .btn-primary {
+    background-color: #e5e5e5;
+    color: #0a0a0a;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.85;
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    color: #e5e5e5;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    border: 1px solid #333;
+    transition: border-color 0.2s;
+  }
+
+  .btn-secondary:hover {
+    border-color: #666;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #1e1e1e;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #999;
+  }
+}

@@ -1,0 +1,80 @@
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export interface LinkItem {
+  id: string;
+  url: string;
+  domain: string;
+  source: string;
+  raw_content: string | null;
+  author_id: number | null;
+  channel_id: number | null;
+  channel_name: string | null;
+  discord_message_id: number | null;
+  posted_at: string;
+  llm_status: string;
+  title: string | null;
+  description: string | null;
+  tags: string[];
+  source_detected: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedLinksResponse {
+  data: LinkItem[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+export interface SourceItem {
+  source: string;
+}
+
+export interface SourcesResponse {
+  data: SourceItem[];
+}
+
+export async function fetchLinks(params: Record<string, string | number> = {}): Promise<PaginatedLinksResponse> {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      searchParams.append(key, String(value));
+    }
+  }
+  const query = searchParams.toString();
+  return apiFetch<PaginatedLinksResponse>(`/api/links${query ? `?${query}` : ''}`);
+}
+
+export async function fetchLinkById(id: string): Promise<{ data: LinkItem }> {
+  return apiFetch<{ data: LinkItem }>(`/api/links/${id}`);
+}
+
+export async function fetchSources(): Promise<SourcesResponse> {
+  return apiFetch<SourcesResponse>('/api/links/sources');
+}
