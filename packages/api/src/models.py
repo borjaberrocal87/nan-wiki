@@ -89,7 +89,6 @@ class ChatMessage(Base):
 
 # Índices
 Index("idx_links_source", Link.source)
-Index("idx_links_tags", Link.tags, postgresql_using="gin")
 Index("idx_links_posted_at", Link.posted_at, postgresql_order_by="desc")
 Index("idx_links_domain", Link.domain)
 Index(

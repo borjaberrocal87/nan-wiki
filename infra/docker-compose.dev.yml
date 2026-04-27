@@ -1,22 +1,25 @@
 services:
   api:
+    build:
+      context: ..
+      dockerfile: infra/dockerfiles/api/Dockerfile.dev
     volumes:
       - ../packages/api/src:/app/src
     environment:
       - PYTHONUNBUFFERED=1
 
   bot:
-    command: npx tsx watch src/index.ts
+    build:
+      context: ..
+      dockerfile: infra/dockerfiles/bot/Dockerfile.dev
     volumes:
       - ../packages/bot/src:/app/packages/bot/src
-      - ../packages/shared/src:/app/packages/shared/src
-    environment:
-      - NODE_ENV=development
+      - ../packages/shared/src:/app/packages/bot/src/shared
 
   web:
-    command: npx next dev -p 3000
+    build:
+      context: ..
+      dockerfile: infra/dockerfiles/web/Dockerfile.dev
     volumes:
       - ../packages/web/src:/app/packages/web/src
       - ../packages/web/public:/app/packages/web/public
-    environment:
-      - NODE_ENV=development
