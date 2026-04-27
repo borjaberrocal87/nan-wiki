@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { useEffect, useState } from "react";
 import { fetchLinks, type LinkItem, type PaginatedLinksResponse } from "../../lib/api";
 import LinkCard from "../links/LinkCard";
@@ -96,12 +98,7 @@ export default function LinkGrid() {
               cursor: "pointer",
               transition: "border-color 0.2s",
             }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "#666";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "#333";
-            }}
+            className="load-more-btn"
           >
             Load more
           </button>

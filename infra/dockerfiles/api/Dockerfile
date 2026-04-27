@@ -1,23 +1,11 @@
-FROM python:3.12-slim AS builder
-
-WORKDIR /app
-
-RUN pip install --no-cache-dir build setuptools
-
-COPY packages/api/ packages/api/
-WORKDIR /app/packages/api
-RUN python -m build --wheel
-RUN pip install --no-cache-dir dist/*.whl
-
 FROM python:3.12-slim AS runtime
 
 WORKDIR /app
 
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-COPY packages/api/src/ ./src/
 COPY packages/api/pyproject.toml ./
+COPY packages/api/src/ ./src/
+
+RUN pip install --no-cache-dir -e .
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1

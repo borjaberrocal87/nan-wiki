@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Text, VARCHAR, Boolean, ARRAY, Index, func
-from sqlalchemy.dialects.postgresql import UUID, VECTOR
+from sqlalchemy import BigInteger, Text, VARCHAR, Boolean, ARRAY, Index, ForeignKey, func, desc
+from sqlalchemy.dialects.postgresql import UUID
+from pgvector.sqlalchemy import VECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
@@ -41,8 +42,8 @@ class Link(Base):
     domain: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     source: Mapped[str] = mapped_column(VARCHAR(50), nullable=False)
     raw_content: Mapped[str | None] = mapped_column(Text, nullable=True)
-    author_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    channel_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    author_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.id"), nullable=True)
+    channel_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("channels.id"), nullable=True)
     discord_message_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     discord_channel_name: Mapped[str | None] = mapped_column(VARCHAR(200), nullable=True)
     posted_at: Mapped[datetime] = mapped_column(nullable=False)
@@ -66,7 +67,7 @@ class ChatConversation(Base):
     __tablename__ = "chat_conversations"
 
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    user_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    user_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.id"), nullable=True)
     session_id: Mapped[str] = mapped_column(UUID(as_uuid=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(nullable=True)
 
@@ -80,6 +81,7 @@ class ChatMessage(Base):
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True)
     conversation_id: Mapped[str] = mapped_column(
         UUID(as_uuid=True),
+        ForeignKey("chat_conversations.id", ondelete="CASCADE"),
         nullable=False,
     )
     role: Mapped[str] = mapped_column(VARCHAR(10), nullable=False)
@@ -91,7 +93,7 @@ class ChatMessage(Base):
 
 # Índices
 Index("idx_links_source", Link.source)
-Index("idx_links_posted_at", Link.posted_at, postgresql_order_by="desc")
+Index("idx_links_posted_at", desc(Link.posted_at))
 Index("idx_links_domain", Link.domain)
 Index(
     "idx_links_embedding",

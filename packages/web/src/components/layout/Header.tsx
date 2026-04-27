@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { isLoggedIn, logout } from "../lib/auth";
+import { isLoggedIn, logout } from "../../lib/auth";
 
 export default function Header() {
   const authenticated = isLoggedIn();

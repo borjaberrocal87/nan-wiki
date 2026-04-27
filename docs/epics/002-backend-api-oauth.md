@@ -48,24 +48,29 @@ Construir el backend FastAPI con endpoints CRUD de links, el flujo de autenticac
 **Como** usuario del servidor de Discord, quiero loguearme con mi cuenta de Discord para poder acceder a la web.
 
 **Criterios de aceptación:**
-- [x] Endpoint `GET /api/auth/discord` redirige a Discord OAuth
-- [x] Endpoint `GET /api/auth/discord/callback` procesa el callback
-- [x] Verificación del state parameter (CSRF protection via cookie)
-- [x] Intercambio de code → access_token + user info con Discord API
+- [x] Endpoint `GET /api/auth/discord` genera state y redirige a Discord OAuth
+- [x] Discord redirige al frontend en `/auth/discord/callback` con code y state
+- [x] Frontend llama al backend `POST /api/auth/discord/callback` para intercambiar code por JWT
+- [x] Backend verifica code con Discord API, crea/actualiza usuario, genera JWT
+- [x] Frontend guarda JWT en cookie httpOnly tras login exitoso
 - [x] Creación/actualización de usuario en tabla `users` si no existe
-- [x] Session JWT con Discord user ID como payload
-- [x] JWT expire: configurable (7 days recommended)
-- [x] Middleware de autenticación protege rutas `/api/*` (excepto `/api/auth/*`)
+- [x] JWT expire: configurable (30 days recommended)
+- [x] Cookie `token` con `httpOnly: true`, `secure: false` (dev), `sameSite: lax`
+- [x] Redirección server-side: `/` redirige a `/login` si no autenticado
+- [x] Redirección server-side: `/login` redirige a `/` si ya autenticado
 - [x] Endpoint `GET /api/auth/me` devuelve info del usuario logueado
-- [x] Endpoint `POST /api/auth/logout` invalida session
+- [x] Logout limpia cookie token y redirige a `/`
 
 **Tareas:**
-- [x] Crear `packages/api/src/routers/auth.py` con endpoints
+- [x] Crear `packages/api/src/routers/auth.py` con endpoints (`GET /discord`, `POST /discord/callback`)
 - [x] Implementar JWT generation/verification (python-jose + passlib)
 - [x] Implementar middleware de auth dependency (`packages/api/src/dependencies.py`)
-- [x] Configurar vars de entorno: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, JWT_SECRET
-- [x] Añadir `packages/web/src/lib/auth.ts` para gestión de session en frontend
-- [x] Probar flujo completo OAuth localmente
+- [x] Configurar vars de entorno: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI, JWT_SECRET, FRONTEND_URL
+- [x] Crear `packages/web/src/app/auth/discord/callback/route.ts` como Next.js API route
+- [x] Crear `packages/web/src/lib/auth.ts` con gestión de session (cookies)
+- [x] Añadir funciones `getServerToken()` y `getServerIsLoggedIn()` para SSR redirect
+- [x] Actualizar docker-compose.yml con `API_URL` y `NEXT_PUBLIC_API_URL`
+- [x] Probar flujo completo OAuth localmente: login → Discord → frontend callback → API token exchange → redirect
 
 **Estimación:** 7h
 
@@ -83,18 +88,20 @@ Construir el backend FastAPI con endpoints CRUD de links, el flujo de autenticac
 - [x] Layout con header fijo (logo/título + botón login/logout)
 - [x] Página principal `/` con grid de cards de links
 - [x] Página `/login` redirige a Discord OAuth
-- [x] Página `/callback` maneja OAuth callback y redirige tras login exitoso
+- [x] Página `/auth/discord/callback` maneja OAuth callback y redirige tras login exitoso
 - [x] Responsive: mobile-first, funciona en móvil y desktop
 - [x] No hay contenido placeholder — los datos vienen de la API real
+- [x] Redirección server-side: `/` protege acceso (requiere login)
+- [x] Redirección server-side: `/login` redirige a `/` si ya logueado
 
 **Tareas:**
 - [x] Actualizar `packages/web/src/styles/globals.css` con tema oscuro completo
 - [x] Configurar `packages/web/src/app/layout.tsx` con header fijo
-- [x] Crear `packages/web/src/app/page.tsx` con grid de links
-- [x] Crear `packages/web/src/app/login/page.tsx` con redirect a OAuth
-- [x] Crear `packages/web/src/app/callback/page.tsx` con handler de OAuth
-- [x] Crear `packages/web/src/lib/api.ts` con fetch wrapper a la API
-- [x] Crear `packages/web/src/lib/auth.ts` con gestión de session
+- [x] Crear `packages/web/src/app/page.tsx` con grid de links + auth guard SSR
+- [x] Crear `packages/web/src/app/login/page.tsx` con redirect a OAuth + auth guard SSR
+- [x] Crear `packages/web/src/app/auth/discord/callback/route.ts` como API route handler
+- [x] Crear `packages/web/src/lib/api.ts` con fetch wrapper a la API + `exchangeDiscordToken()`
+- [x] Crear `packages/web/src/lib/auth.ts` con gestión de session via cookies
 - [x] Crear `packages/web/src/components/layout/Header.tsx`
 - [x] Crear `packages/web/src/components/links/LinkCard.tsx`
 - [x] Crear `packages/web/src/components/links/LinkGrid.tsx`
@@ -118,7 +125,9 @@ HU-2.1 (API CRUD) ──┘
 
 - [x] API FastAPI accesible en localhost con endpoints CRUD y Swagger docs
 - [x] Filtros y paginación funcionan correctamente
-- [x] Login con Discord OAuth funciona (login → callback → usuario logueado)
+ - [x] Login con Discord OAuth funciona (login → Discord → frontend callback → API token exchange → usuario logueado)
+- [x] JWT se almacena en cookie httpOnly, no en localStorage
+- [x] Rutas protegidas con SSR redirect: `/` requiere login, `/login` redirige a `/` si ya logueado
 - [x] JWT session protege rutas API
 - [x] Frontend Next.js renderiza lista de links desde API real
 - [x] Tema oscuro inspirado en nan.builders aplicado

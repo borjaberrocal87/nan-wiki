@@ -75,6 +75,22 @@
     color: #aaaaaa;
   }
 
+  .discord-login-btn {
+    opacity: 1;
+  }
+
+  .discord-login-btn:hover {
+    opacity: 0.85;
+  }
+
+  .load-more-btn {
+    border-color: #333;
+  }
+
+  .load-more-btn:hover {
+    border-color: #666;
+  }
+
   .btn-primary {
     background-color: #e5e5e5;
     color: #0a0a0a;

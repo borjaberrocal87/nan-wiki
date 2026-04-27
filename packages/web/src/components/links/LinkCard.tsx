@@ -1,3 +1,5 @@
+"use client";
+
 import type { LinkItem } from "../../lib/api";
 
 interface LinkCardProps {

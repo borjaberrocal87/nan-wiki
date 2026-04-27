@@ -1,7 +1,14 @@
+import { redirect } from "next/navigation";
+import { getServerIsLoggedIn } from "../lib/auth";
 import Header from "../components/layout/Header";
 import LinkGrid from "../components/links/LinkGrid";
 
-export default function Home() {
+export default async function Home() {
+  const authenticated = await getServerIsLoggedIn();
+  if (!authenticated) {
+    redirect("/login");
+  }
+
   return (
     <div style={{ minHeight: "100vh" }}>
       <Header />

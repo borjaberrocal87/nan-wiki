@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from httpx import AsyncClient, HTTPStatusError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,30 +32,31 @@ async def discord_login():
     query = "&".join(f"{k}={v}" for k, v in params.items())
     url = f"https://discord.com/api/oauth2/authorize?{query}"
 
-    resp = Response(status_code=200)
-    resp.headers["Location"] = url
-    resp.set_cookie(
-        key="oauth_state",
-        value=state,
-        httponly=True,
-        max_age=300,
-        samesite="lax",
-    )
-    return resp
+    return RedirectResponse(url=url, status_code=303)
 
 
 @router.get("/discord/callback")
-async def discord_callback(
+async def discord_callback_redirect(
     code: str,
     state: str,
-    oauth_state: str | None = Cookie(None),
+):
+    # Redirect to frontend callback with code and state
+    frontend_url = f"{settings.FRONTEND_URL}/auth/discord/callback?code={code}&state={state}"
+    return RedirectResponse(url=frontend_url)
+
+
+@router.post("/discord/callback")
+async def discord_callback(
+    body: dict,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ):
     from jose import jwt
 
-    # CSRF: verify state matches cookie
-    if not oauth_state or oauth_state != state:
-        raise HTTPException(status_code=400, detail="Invalid state parameter")
+    code = body.get("code")
+    state = body.get("state")
+
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing code")
 
     async with AsyncClient() as client:
         try:
@@ -119,20 +120,7 @@ async def discord_callback(
     }
     jwt_token = jwt.encode(jwt_payload, settings.JWT_SECRET, algorithm="HS256")
 
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head><title>Login Successful</title></head>
-    <body>
-        <script>
-            localStorage.setItem('token', '{jwt_token}');
-            window.location.href = '/';
-        </script>
-        <p>Login successful. Redirecting...</p>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html)
+    return {"token": jwt_token, "user": {"id": discord_id, "username": username, "avatar_url": avatar_url}}
 
 
 @router.get("/me")

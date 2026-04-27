@@ -1,6 +1,7 @@
 export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 export function isLoggedIn(): boolean {
@@ -8,8 +9,19 @@ export function isLoggedIn(): boolean {
 }
 
 export function logout(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('token');
+  if (typeof document !== 'undefined') {
+    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     window.location.href = '/';
   }
+}
+
+export async function getServerToken(): Promise<string | null> {
+  const { cookies } = await import('next/headers');
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token');
+  return token ? token.value : null;
+}
+
+export async function getServerIsLoggedIn(): Promise<boolean> {
+  return (await getServerToken()) !== null;
 }

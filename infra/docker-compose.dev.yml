@@ -23,3 +23,6 @@ services:
     volumes:
       - ../packages/web/src:/app/packages/web/src
       - ../packages/web/public:/app/packages/web/public
+    env_file:
+      - path: ../.env
+        required: false

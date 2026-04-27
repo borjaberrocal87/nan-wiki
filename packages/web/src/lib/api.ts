@@ -78,3 +78,19 @@ export async function fetchLinkById(id: string): Promise<{ data: LinkItem }> {
 export async function fetchSources(): Promise<SourcesResponse> {
   return apiFetch<SourcesResponse>('/api/links/sources');
 }
+
+export async function exchangeDiscordToken(code: string, state: string): Promise<{ token: string }> {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  const response = await fetch(`${API_URL}/api/auth/discord/callback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, state }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to exchange token');
+  }
+
+  return response.json();
+}
