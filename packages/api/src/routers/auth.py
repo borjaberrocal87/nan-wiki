@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import RedirectResponse
 from httpx import AsyncClient, HTTPStatusError
 from sqlalchemy import select
@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
 from src.database import get_db
+from src.dependencies import AuthUser, get_current_user
 from src.models import User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -53,7 +54,6 @@ async def discord_callback(
     from jose import jwt
 
     code = body.get("code")
-    state = body.get("state")
 
     if not code:
         raise HTTPException(status_code=400, detail="Missing code")
@@ -107,7 +107,7 @@ async def discord_callback(
             username=username,
             avatar_url=avatar_url,
             discriminator=discriminator,
-            joined_at=datetime.now(timezone.utc),
+            joined_at=datetime.now(UTC),
         )
         db.add(user)
         await db.commit()
@@ -124,10 +124,30 @@ async def discord_callback(
 
 
 @router.get("/me")
-async def get_me():
-    raise HTTPException(status_code=501, detail="Not implemented yet - requires auth middleware")
+async def get_me(
+    user: Annotated[AuthUser, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(select(User).where(User.id == user.user_id))
+    db_user = result.scalar_one_or_none()
+
+    return {
+        "id": user.user_id,
+        "username": db_user.username if db_user else user.username,
+        "avatar_url": db_user.avatar_url if db_user else None,
+        "is_admin": db_user.is_admin if db_user else False,
+    }
 
 
 @router.post("/logout")
-async def logout():
-    raise HTTPException(status_code=501, detail="Not implemented yet - requires auth middleware")
+async def logout(response: Response):
+    response.set_cookie(
+        key="token",
+        value="",
+        path="/",
+        httponly=True,
+        max_age=0,
+        expires=0,
+        samesite="lax",
+    )
+    return RedirectResponse(url="/", status_code=303)

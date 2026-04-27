@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { isLoggedIn, logout } from "../../lib/auth";
+import { isLoggedIn } from "../../lib/auth";
+import { apiLogout } from "../../lib/api";
 
 export default function Header() {
   const authenticated = isLoggedIn();
@@ -42,7 +43,10 @@ export default function Header() {
               Explore
             </Link>
             <button
-              onClick={() => logout()}
+              onClick={async () => {
+                await apiLogout();
+                window.location.href = '/';
+              }}
               style={{
                 background: "none",
                 border: "none",

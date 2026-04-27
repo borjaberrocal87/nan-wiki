@@ -1,10 +1,9 @@
 "use client";
 
-"use client";
-
-import { useEffect, useState } from "react";
-import { fetchLinks, type LinkItem, type PaginatedLinksResponse } from "../../lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { fetchLinks, fetchSources, type LinkItem, type PaginatedLinksResponse, type SourceItem } from "../../lib/api";
 import LinkCard from "../links/LinkCard";
+import LinkFilters from "../links/LinkFilters";
 
 export default function LinkGrid() {
   const [links, setLinks] = useState<LinkItem[]>([]);
@@ -12,14 +11,29 @@ export default function LinkGrid() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [sources, setSources] = useState<SourceItem[]>([]);
+  const [filters, setFilters] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
+    fetchSources().then((res) => {
+      setSources(res.data);
+    }).catch(() => {});
+  }, []);
+
+  const resetAndFetch = useCallback((newPage: number, extraParams: Record<string, string | null>) => {
     setLoading(true);
     setError(null);
 
-    fetchLinks({ page: String(page), per_page: "20" })
+    const params: Record<string, string | number> = { page: String(newPage), per_page: "20" };
+    for (const [key, value] of Object.entries(extraParams)) {
+      if (value !== null && value !== undefined) {
+        params[key] = value;
+      }
+    }
+
+    fetchLinks(params)
       .then((res: PaginatedLinksResponse) => {
-        if (page === 1) {
+        if (newPage === 1) {
           setLinks(res.data);
         } else {
           setLinks((prev) => [...prev, ...res.data]);
@@ -28,10 +42,18 @@ export default function LinkGrid() {
       })
       .catch((err: Error) => {
         console.error("Failed to fetch links:", err);
-        if (page === 1) setError("Failed to load links. Make sure the API is running.");
+        if (newPage === 1) setError("Failed to load links. Make sure the API is running.");
       })
       .finally(() => setLoading(false));
-  }, [page]);
+  }, []);
+
+  useEffect(() => {
+    resetAndFetch(1, filters);
+  }, [filters, resetAndFetch]);
+
+  const handleFilterChange = (newFilters: Record<string, string | null>) => {
+    setFilters(newFilters);
+  };
 
   if (loading && page === 1) {
     return (
@@ -73,6 +95,7 @@ export default function LinkGrid() {
 
   return (
     <>
+      <LinkFilters sources={sources} onFilterChange={handleFilterChange} />
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",

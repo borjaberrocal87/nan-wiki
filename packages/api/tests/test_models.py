@@ -1,7 +1,6 @@
+from datetime import UTC
 from unittest.mock import AsyncMock, MagicMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database import async_session
 from src.models import Link, User
 
 
@@ -17,6 +16,26 @@ class TestModels:
         msg.conversation = conv
         assert msg.conversation == conv
 
+    def test_user_defaults(self):
+        user = User()
+        assert user.is_admin is False
+
+    def test_link_with_all_fields(self):
+        from datetime import datetime
+        link = Link(
+            id="550e8400-e29b-41d4-a716-446655440000",
+            url="https://github.com/test/repo",
+            domain="github.com",
+            source="github",
+            posted_at=datetime.now(UTC),
+            title="Test Repo",
+            description="A test repository",
+            tags=["test", "python"],
+        )
+        assert link.llm_status == "pending"
+        assert link.title == "Test Repo"
+        assert link.tags == ["test", "python"]
+
 
 class TestDatabase:
     @patch("src.database.engine")
@@ -25,9 +44,9 @@ class TestDatabase:
         mock_engine.begin.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
         mock_engine.begin.return_value.__aexit__ = AsyncMock(return_value=None)
 
-        from src.database import Base, init_db
-
         import asyncio
+
+        from src.database import init_db
 
         asyncio.run(init_db())
         mock_conn.run_sync.assert_called_once()

@@ -1,20 +1,13 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 
   if (!response.ok) {
@@ -93,4 +86,8 @@ export async function exchangeDiscordToken(code: string, state: string): Promise
   }
 
   return response.json();
+}
+
+export async function apiLogout(): Promise<void> {
+  await apiFetch('/api/auth/logout', { method: 'POST' });
 }

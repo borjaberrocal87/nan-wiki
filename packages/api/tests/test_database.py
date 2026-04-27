@@ -1,8 +1,6 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import async_session, init_db
 
@@ -33,4 +31,4 @@ class TestDatabaseInit:
 class TestAsyncSession:
     def test_session_is_configured(self):
         assert async_session is not None
-        assert issubclass(async_session, AsyncMock.__class__ or type)
+        assert issubclass(async_session, type)

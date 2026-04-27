@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,11 +20,7 @@ class AuthUser:
 _bearer = HTTPBearer()
 
 
-async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(_bearer)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-) -> AuthUser:
-    token = credentials.credentials
+async def _decode_token(token: str) -> AuthUser:
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
         user_id = payload.get("user_id")
@@ -34,3 +30,22 @@ async def get_current_user(
         return AuthUser(user_id=int(user_id), username=username or "")
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+
+async def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(_bearer)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> AuthUser:
+    return await _decode_token(credentials.credentials)
+
+
+async def get_current_user_optional(
+    token: Annotated[str | None, Cookie()] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)] = None,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> AuthUser | None:
+    if token:
+        return await _decode_token(token)
+    if credentials:
+        return await _decode_token(credentials.credentials)
+    return None

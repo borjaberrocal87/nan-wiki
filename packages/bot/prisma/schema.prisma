@@ -49,6 +49,7 @@ model Link {
   description         String?   @db.Text
   tags                String[]  @default([])
   sourceDetected      String?   @map("source_detected")
+  // embedding column exists in DB (vector(1536)) but is managed by API via SQLAlchemy, not Prisma
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
