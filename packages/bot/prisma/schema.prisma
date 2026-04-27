@@ -12,7 +12,7 @@ model User {
   username    String
   avatarUrl   String?   @map("avatar_url")
   discriminator String? @map("discriminator")
-  joinedAt    DateTime? @map("joined_at")
+  joinedAt    DateTime @default(now()) @map("joined_at")
   isAdmin     Boolean   @default(false) @map("is_admin")
   links       Link[]
   conversations ChatConversation[]

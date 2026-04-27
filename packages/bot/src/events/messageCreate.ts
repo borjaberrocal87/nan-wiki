@@ -11,6 +11,39 @@ import { prisma } from '../services/db.js';
 import { detectUrls, DetectedUrl } from '../services/linkDetector.js';
 
 const CONFIRM_EMBED_TIMEOUT = 15_000;
+const MAX_URLS_PER_MESSAGE = 10;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 5;
+
+const messageTimestamps = new Map<string, number[]>();
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const timestamps = messageTimestamps.get(userId) ?? [];
+  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+
+  if (recent.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  recent.push(now);
+  messageTimestamps.set(userId, recent);
+  return true;
+}
+
+function cleanupTimestamps() {
+  const now = Date.now();
+  for (const [key, timestamps] of messageTimestamps.entries()) {
+    const filtered = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+    if (filtered.length === 0) {
+      messageTimestamps.delete(key);
+    } else {
+      messageTimestamps.set(key, filtered);
+    }
+  }
+}
+
+setInterval(cleanupTimestamps, RATE_LIMIT_WINDOW_MS);
 
 function buildConfirmEmbed(detected: DetectedUrl[]): EmbedBuilder {
   const embed = new EmbedBuilder()
@@ -49,33 +82,45 @@ function buildErrorEmbed(error: unknown): EmbedBuilder {
     .setTimestamp();
 }
 
-async function ensureUser(message: Message) {
-  await prisma.user.upsert({
-    where: { id: BigInt(message.author.id) },
-    create: {
-      id: BigInt(message.author.id),
-      username: message.author.username,
-      avatarUrl: message.author.avatar,
-      discriminator: message.author.discriminator,
-    },
-    update: {
-      username: message.author.username,
-      avatarUrl: message.author.avatar,
-      discriminator: message.author.discriminator,
-    },
-  });
+async function ensureUser(message: Message): Promise<boolean> {
+  try {
+    await prisma.user.upsert({
+      where: { id: BigInt(message.author.id) },
+      create: {
+        id: BigInt(message.author.id),
+        username: message.author.username,
+        avatarUrl: message.author.avatar,
+        discriminator: message.author.discriminator,
+      },
+      update: {
+        username: message.author.username,
+        avatarUrl: message.author.avatar,
+        discriminator: message.author.discriminator,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error(`[LINK] Failed to ensure user ${message.author.tag}:`, error);
+    return false;
+  }
 }
 
-async function ensureChannel(channelId: string, guildId: string, channelName: string) {
-  await prisma.channel.upsert({
-    where: { id: BigInt(channelId) },
-    create: {
-      id: BigInt(channelId),
-      name: channelName,
-      guildId: BigInt(guildId),
-    },
-    update: {},
-  });
+async function ensureChannel(channelId: string, guildId: string, channelName: string): Promise<boolean> {
+  try {
+    await prisma.channel.upsert({
+      where: { id: BigInt(channelId) },
+      create: {
+        id: BigInt(channelId),
+        name: channelName,
+        guildId: BigInt(guildId),
+      },
+      update: {},
+    });
+    return true;
+  } catch (error) {
+    console.error(`[LINK] Failed to ensure channel ${channelId}:`, error);
+    return false;
+  }
 }
 
 async function saveLink(
@@ -85,10 +130,11 @@ async function saveLink(
   message: Message
 ): Promise<boolean> {
   try {
-    await ensureUser(message);
+    const userExists = await ensureUser(message);
+    let channelExists = true;
     if (message.channelId && message.guildId) {
       const channelName = message.channel instanceof TextChannel ? message.channel.name : `channel-${message.channelId}`;
-      await ensureChannel(message.channelId, message.guildId, channelName);
+      channelExists = await ensureChannel(message.channelId, message.guildId, channelName);
     }
     await prisma.link.create({
       data: {
@@ -96,8 +142,8 @@ async function saveLink(
         domain,
         source,
         rawContent: message.content.slice(0, 500),
-        authorId: BigInt(message.author.id),
-        channelId: message.channelId ? BigInt(message.channelId) : undefined,
+        authorId: userExists ? BigInt(message.author.id) : undefined,
+        channelId: channelExists && message.channelId ? BigInt(message.channelId) : undefined,
         discordMessageId: message.id ? BigInt(message.id) : undefined,
         discordChannelName:
           message.channel instanceof TextChannel
@@ -128,6 +174,18 @@ export async function handleMessageCreate(message: Message): Promise<void> {
 
   const detected = detectUrls(message.content);
   if (detected.length === 0) return;
+
+  if (detected.length > MAX_URLS_PER_MESSAGE) {
+    console.log(
+      `[LINK] Ignoring message with ${detected.length} URLs (max ${MAX_URLS_PER_MESSAGE}) from ${message.author.tag}`
+    );
+    return;
+  }
+
+  if (!checkRateLimit(message.author.id)) {
+    console.log(`[LINK] Rate limit exceeded for ${message.author.tag}`);
+    return;
+  }
 
   let savedCount = 0;
   let hasDuplicate = false;
