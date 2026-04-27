@@ -6,7 +6,7 @@ COPY pnpm-workspace.yaml package.json ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/web/package.json packages/web/
 
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN corepack enable && pnpm install
 
 COPY packages/shared/ packages/shared/
 COPY packages/web/ packages/web/
@@ -25,7 +25,7 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/
 
-RUN corepack enable && pnpm install --prod --frozen-lockfile
+RUN corepack enable && pnpm install --prod
 
 ENV NODE_ENV=production
 

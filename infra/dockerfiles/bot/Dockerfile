@@ -6,7 +6,7 @@ COPY pnpm-workspace.yaml package.json ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/bot/package.json packages/bot/
 
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN corepack enable && pnpm install
 
 COPY packages/shared/ packages/shared/
 COPY packages/bot/ packages/bot/
