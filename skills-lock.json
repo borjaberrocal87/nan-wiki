@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "docker-compose": {
+      "source": "bagelhole/devops-security-agent-skills",
+      "sourceType": "github",
+      "computedHash": "d3119717854229b9b464a870e811c3f9662caa07c6e06ba756e9d1b84e83c324"
+    },
+    "fastapi-python": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "computedHash": "1d7346210a6690d2faeb089f074c0dc20a7056c2c83ac1062a11c1b73158be72"
+    },
+    "nextjs-react-typescript": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "computedHash": "eb995cc826bf48498e0e90969fc7dadfa2ec634002c26cfcfde565134cefa738"
+    },
+    "tailwindcss": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "computedHash": "b1d95ac9242e613966fb11ed413fd2ff61f04641e4e8c1418e0e8258573fcc68"
+    }
+  }
+}

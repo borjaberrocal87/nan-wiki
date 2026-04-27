@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          BigInt    @id @map("id")
+  username    String
+  avatarUrl   String?   @map("avatar_url")
+  discriminator String? @map("discriminator")
+  joinedAt    DateTime? @map("joined_at")
+  isAdmin     Boolean   @default(false) @map("is_admin")
+  links       Link[]
+  conversations ChatConversation[]
+}
+
+model Channel {
+  id               BigInt  @id @map("id")
+  name             String
+  guildId          BigInt  @map("guild_id")
+  category         String?
+  createdAt        DateTime? @map("created_at")
+  links            Link[]
+}
+
+model Link {
+  id                  UUID       @id @default(uuid()) @map("id")
+  url                 String     @unique
+  domain              String
+  source              String
+  rawContent          String?    @map("raw_content")
+  authorId            BigInt?    @map("author_id")
+  author              User?      @relation(fields: [authorId], references: [id], map: "author_id")
+  channelId           BigInt?    @map("channel_id")
+  channel             Channel?   @relation(fields: [channelId], references: [id], map: "channel_id")
+  discordMessageId    BigInt?    @map("discord_message_id")
+  discordChannelName  String?    @map("discord_channel_name")
+  postedAt            DateTime   @map("posted_at")
+  llmStatus           String     @default("pending") @map("llm_status")
+  title               String?
+  description         String?
+  tags                String[]   @default([])
+  sourceDetected      String?    @map("source_detected")
+  embedding           Float?[]   @map("embedding")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+
+  @@index([source])
+  @@index([tags], type: Gist)
+  @@index([postedAt(order: Desc)])
+  @@index([domain])
+}
+
+model ChatConversation {
+  id        UUID       @id @default(uuid()) @map("id")
+  userId    BigInt?    @map("user_id")
+  user      User?      @relation(fields: [userId], references: [id], map: "user_id")
+  sessionId UUID       @map("session_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id               UUID            @id @default(uuid()) @map("id")
+  conversationId   UUID            @map("conversation_id")
+  conversation     ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade, map: "conversation_id")
+  role             String
+  content          String
+  createdAt        DateTime        @default(now()) @map("created_at")
+}

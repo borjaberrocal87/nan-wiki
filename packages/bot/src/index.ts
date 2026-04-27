@@ -1,5 +1,8 @@
-import { Events } from 'discord.js';
-import { handleMessageCreate } from '../events/messageCreate.js';
-import { client } from '../client.js';
+import './events/ready.js';
+import './events/messageCreate.js';
+import { startBot } from './client.js';
 
-client.on(Events.MessageCreate, handleMessageCreate);
+startBot().catch((error) => {
+  console.error('Failed to start bot:', error);
+  process.exit(1);
+});
