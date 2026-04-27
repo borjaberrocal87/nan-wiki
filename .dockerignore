@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+packages/*/node_modules
+
+# Build output
+packages/web/.next
+packages/web/out
+packages/*/dist
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.development
+.env.production
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*.egg-info
+dist
+build
+*.egg
+.venv
+venv
+
+# Docker
+*.pid
+
+# Logs
+*.log
+
+# Testing
+coverage
+.htmlcov
+pytest_cache
+*.egg-info
+migrations
+
+# Docs
+docs/
+
+# Agents
+.agents/
+skills-lock.json

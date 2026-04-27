@@ -31,14 +31,14 @@ services:
 
   api:
     build:
-      context: ../packages/api
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: infra/dockerfiles/api/Dockerfile
     container_name: ll-api
     restart: unless-stopped
     ports:
       - "8000:8000"
     env_file:
-      - path: ../../.env
+      - path: ../.env
         required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-linklibrary}
@@ -51,12 +51,12 @@ services:
 
   bot:
     build:
-      context: ../packages/bot
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: infra/dockerfiles/bot/Dockerfile
     container_name: ll-bot
     restart: unless-stopped
     env_file:
-      - path: ../../.env
+      - path: ../.env
         required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-linklibrary}
@@ -66,13 +66,13 @@ services:
 
   worker:
     build:
-      context: ../packages/api
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: infra/dockerfiles/api/Dockerfile
     container_name: ll-worker
     restart: unless-stopped
     command: python -m src.workers.queue
     env_file:
-      - path: ../../.env
+      - path: ../.env
         required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-linklibrary}
@@ -85,14 +85,14 @@ services:
 
   web:
     build:
-      context: ../packages/web
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: infra/dockerfiles/web/Dockerfile
     container_name: ll-web
     restart: unless-stopped
     ports:
       - "3000:3000"
     env_file:
-      - path: ../../.env
+      - path: ../.env
         required: false
     environment:
       NEXT_PUBLIC_API_URL: http://api:8000

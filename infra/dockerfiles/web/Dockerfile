@@ -11,7 +11,8 @@ RUN corepack enable && pnpm install --frozen-lockfile
 COPY packages/shared/ packages/shared/
 COPY packages/web/ packages/web/
 
-RUN cd packages/web && pnpm build
+WORKDIR /app/packages/web
+RUN pnpm build
 
 FROM node:22-alpine AS runtime
 
@@ -21,6 +22,7 @@ COPY --from=builder /app/packages/web/.next ./packages/web/.next
 COPY --from=builder /app/packages/web/public ./packages/web/public
 COPY --from=builder /app/packages/web/package.json ./packages/web/
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/
 
 RUN corepack enable && pnpm install --prod --frozen-lockfile
