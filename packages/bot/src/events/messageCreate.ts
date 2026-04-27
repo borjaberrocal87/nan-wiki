@@ -221,7 +221,7 @@ export async function handleMessageCreate(message: Message): Promise<void> {
   try {
     const reply = await message.reply({ embeds: [embed], components: [row] });
     setTimeout(() => {
-      void reply.edit({ components: [] }).catch(() => {});
+      void reply.delete().catch(() => {});
     }, CONFIRM_EMBED_TIMEOUT);
   } catch {
     // Reply failed, ignore
