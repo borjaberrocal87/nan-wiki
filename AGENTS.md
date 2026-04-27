@@ -58,10 +58,14 @@ docs/
 ├── CONTEXT.md                    # Full project architecture plan (stack, DB schema, milestones)
 ├── code-style.md
 ├── documentation-format.md
+├── monorepo-structure.md
 ├── backend/
 │   ├── api-routes-reflect-metadata.md
+│   ├── bot-event-handling.md
 │   ├── dependency-injection-diod.md
+│   ├── docker-multi-stage-builds.md
 │   ├── hexagonal-architecture.md
+│   ├── prisma-alembic-coexistence.md
 │   └── thin-api-routes.md
 ├── database/
 │   ├── creating-new-tables.md
