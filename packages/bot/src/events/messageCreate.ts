@@ -204,27 +204,31 @@ export async function handleMessageCreate(message: Message): Promise<void> {
   }
 
   if (savedCount === 0) {
-    await message.reply({ embeds: [buildDuplicateEmbed()] });
+    if (process.env.DISABLE_LINK_REPLY !== 'true') {
+      await message.reply({ embeds: [buildDuplicateEmbed()] });
+    }
     return;
   }
 
-  const embed = buildConfirmEmbed(detected);
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setLabel('View all links')
-      .setStyle(ButtonStyle.Link)
-      .setURL(
-        `${process.env.WEB_URL || 'http://localhost:3000'}/links?domain=${detected[0].domain}`
-      )
-  );
+  if (process.env.DISABLE_LINK_REPLY !== 'true') {
+    const embed = buildConfirmEmbed(detected);
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setLabel('View all links')
+        .setStyle(ButtonStyle.Link)
+        .setURL(
+          `${process.env.WEB_URL || 'http://localhost:3000'}/links?domain=${detected[0].domain}`
+        )
+    );
 
-  try {
-    const reply = await message.reply({ embeds: [embed], components: [row] });
-    setTimeout(() => {
-      void reply.delete().catch(() => {});
-    }, CONFIRM_EMBED_TIMEOUT);
-  } catch {
-    // Reply failed, ignore
+    try {
+      const reply = await message.reply({ embeds: [embed], components: [row] });
+      setTimeout(() => {
+        void reply.delete().catch(() => {});
+      }, CONFIRM_EMBED_TIMEOUT);
+    } catch {
+      // Reply failed, ignore
+    }
   }
 
   console.log(
