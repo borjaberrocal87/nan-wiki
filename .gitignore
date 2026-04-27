@@ -1,0 +1,48 @@
+# Environment
+.env
+.env.local
+.env.development
+.env.production
+
+# Dependencies
+node_modules/
+packages/*/node_modules/
+
+# Build output
+packages/web/.next/
+packages/web/out/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# Docker
+*.pid
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker build cache
+.docker/
+
+# Testing coverage
+coverage/
+.coverage
+htmlcov/
