@@ -1,0 +1,12 @@
+{
+  "name": "link-library",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up",
+    "lint:fix": "pnpm -r lint:fix",
+    "test": "pnpm -r test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

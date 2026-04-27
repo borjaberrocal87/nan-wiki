@@ -1,0 +1,106 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: ll-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-linklibrary}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ll-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../packages/api
+      dockerfile: Dockerfile
+    container_name: ll-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ../../.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-linklibrary}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  bot:
+    build:
+      context: ../packages/bot
+      dockerfile: Dockerfile
+    container_name: ll-bot
+    restart: unless-stopped
+    env_file:
+      - path: ../../.env
+        required: false
+    depends_on:
+      api:
+        condition: service_started
+
+  worker:
+    build:
+      context: ../packages/api
+      dockerfile: Dockerfile
+    container_name: ll-worker
+    restart: unless-stopped
+    command: python -m src.workers.queue
+    env_file:
+      - path: ../../.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-linklibrary}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../packages/web
+      dockerfile: Dockerfile
+    container_name: ll-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: ../../.env
+        required: false
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  pgdata:
+
+networks:
+  default:
+    name: link-library-network

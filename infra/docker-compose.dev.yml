@@ -1,0 +1,22 @@
+services:
+  api:
+    volumes:
+      - ../packages/api/src:/app/src
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  bot:
+    command: npx tsx watch src/index.ts
+    volumes:
+      - ../packages/bot/src:/app/packages/bot/src
+      - ../packages/shared/src:/app/packages/shared/src
+    environment:
+      - NODE_ENV=development
+
+  web:
+    command: npx next dev -p 3000
+    volumes:
+      - ../packages/web/src:/app/packages/web/src
+      - ../packages/web/public:/app/packages/web/public
+    environment:
+      - NODE_ENV=development
