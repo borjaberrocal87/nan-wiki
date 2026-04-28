@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Annotated
+from urllib.parse import urlencode
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import RedirectResponse
@@ -11,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
 from src.database import get_db
-from src.dependencies import AuthUser, get_current_user
+from src.dependencies import AuthUser, get_current_user_required
 from src.models import User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -19,8 +21,6 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.get("/discord")
 async def discord_login():
-    import uuid
-
     state = uuid.uuid4().hex
 
     params = {
@@ -30,7 +30,7 @@ async def discord_login():
         "scope": "identify",
         "state": state,
     }
-    query = "&".join(f"{k}={v}" for k, v in params.items())
+    query = urlencode(params)
     url = f"https://discord.com/api/oauth2/authorize?{query}"
 
     return RedirectResponse(url=url, status_code=303)
@@ -117,6 +117,7 @@ async def discord_callback(
     jwt_payload = {
         "user_id": token_user.id,
         "username": token_user.username,
+        "exp": datetime.now(UTC).timestamp() + 60 * 60 * 24 * 30,
     }
     jwt_token = jwt.encode(jwt_payload, settings.JWT_SECRET, algorithm="HS256")
 
@@ -125,17 +126,22 @@ async def discord_callback(
 
 @router.get("/me")
 async def get_me(
-    user: Annotated[AuthUser, Depends(get_current_user)],
+    user: Annotated[AuthUser, Depends(get_current_user_required)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     result = await db.execute(select(User).where(User.id == user.user_id))
     db_user = result.scalar_one_or_none()
 
+    is_admin = db_user.is_admin if db_user else False
+
     return {
-        "id": user.user_id,
+        "discordId": str(user.user_id),
         "username": db_user.username if db_user else user.username,
-        "avatar_url": db_user.avatar_url if db_user else None,
-        "is_admin": db_user.is_admin if db_user else False,
+        "isAdmin": is_admin,
+        "namespace": f"member-{db_user.username if db_user else user.username}",
+        "role": "admin" if is_admin else "member",
+        "roles": [],
+        "expiresAt": user.expires_at,
     }
 
 

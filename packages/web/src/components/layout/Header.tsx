@@ -1,14 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { isLoggedIn } from "../../lib/auth";
-import { apiLogout } from "../../lib/api";
+import { apiLogout, fetchAuthMe, type AuthUser } from "../../lib/api";
 
 export default function Header() {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
-  const authenticated = isLoggedIn();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    fetchAuthMe()
+      .then((u) => setUser(u))
+      .catch(() => setUser(null))
+      .finally(() => setChecking(false));
+  }, []);
 
   if (isLoginPage) return null;
 
@@ -38,7 +46,7 @@ export default function Header() {
         </Link>
 
         <nav style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          {authenticated ? (
+          {!checking && user ? (
             <>
               <Link href="/" style={{
                 color: "var(--text-secondary)",
@@ -79,14 +87,14 @@ export default function Header() {
                 Logout
               </button>
             </>
-          ) : (
+          ) : !checking ? (
             <Link href="/login" className="btn-primary" style={{
               fontSize: "13px",
               padding: "6px 14px",
             }}>
               Login
             </Link>
-          )}
+          ) : null}
         </nav>
       </div>
     </header>

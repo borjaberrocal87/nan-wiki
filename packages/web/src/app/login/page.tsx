@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerIsLoggedIn } from "../../lib/auth";
 import LoginScreen from "../../components/auth/LoginScreen";
-import { API_URL } from "../../lib/api";
+import { API_URL } from "../../lib/api-url";
 
 async function handleLogin() {
   "use server";

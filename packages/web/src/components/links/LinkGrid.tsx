@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SearchBar from "../links/SearchBar";
 import LinkFilters from "../links/LinkFilters";
 import Pagination from "../links/Pagination";
 import LinkCard from "../links/LinkCard";
 import LinkCardSkeleton from "../links/LinkCardSkeleton";
 import { useLinks } from "../../hooks/useLinks";
-import { isLoggedIn } from "../../lib/auth";
 
 const TOTAL_TAGS = [
   "javascript", "typescript", "python", "react", "vue", "angular", "node",
@@ -32,16 +31,6 @@ const TOTAL_CHANNELS = [
 ];
 
 export default function LinkGrid() {
-  const [authenticated, setAuthenticated] = useState(false);
-
-  useEffect(() => {
-    setAuthenticated(isLoggedIn());
-  }, []);
-
-  if (!authenticated) {
-    return null;
-  }
-
   const {
     links,
     loading,

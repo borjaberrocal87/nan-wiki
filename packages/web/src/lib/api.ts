@@ -1,7 +1,5 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(path, {
     ...options,
     credentials: 'include',
     headers: {
@@ -73,9 +71,7 @@ export async function fetchSources(): Promise<SourcesResponse> {
 }
 
 export async function exchangeDiscordToken(code: string, state: string): Promise<{ token: string }> {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-  const response = await fetch(`${API_URL}/api/auth/discord/callback`, {
+  const response = await fetch(`/api/auth/discord/callback`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code, state }),
@@ -90,4 +86,18 @@ export async function exchangeDiscordToken(code: string, state: string): Promise
 
 export async function apiLogout(): Promise<void> {
   await apiFetch('/api/auth/logout', { method: 'POST' });
+}
+
+export interface AuthUser {
+  discordId: string;
+  username: string;
+  isAdmin: boolean;
+  namespace: string;
+  role: string;
+  roles: string[];
+  expiresAt: string;
+}
+
+export async function fetchAuthMe(): Promise<AuthUser> {
+  return apiFetch<AuthUser>('/api/auth/me');
 }

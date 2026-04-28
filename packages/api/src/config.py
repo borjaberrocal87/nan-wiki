@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     DISCORD_CLIENT_ID: str
     DISCORD_CLIENT_SECRET: str
     DISCORD_REDIRECT_URI: str
+    DISCORD_GUILD_ID: str
     FRONTEND_URL: str = "http://localhost:3000"
     OPENAI_API_KEY: str
 

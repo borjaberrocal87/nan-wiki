@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "../../styles/login.css";
 
 export const metadata: Metadata = {
-  title: "WikiEngine | Login",
+  title: "NaN Wiki | Login",
   description: "Discover links shared by your community",
   robots: "noindex, nofollow",
 };

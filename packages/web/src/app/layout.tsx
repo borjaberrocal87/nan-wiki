@@ -5,8 +5,8 @@ import { Suspense } from "react";
 import LoginBodyWrapper from "../components/layout/LoginBodyWrapper";
 
 export const metadata: Metadata = {
-  title: "NaN Cloud",
-  description: "NaN Cloud Platform",
+  title: "NaN Wiki",
+  description: "NaN Wiki",
 };
 
 export default function RootLayout({
