@@ -73,7 +73,10 @@ docs/
 │   ├── table-naming-singular-plural-convention.md
 │   └── text-over-varchar-char-convention.md
 ├── frontend/
-│   └── env-urls-oauth.md
+│   ├── design-tokens-css.md
+│   ├── env-urls-oauth.md
+│   ├── reusable-component-classes.md
+│   └── tailwind-v3-setup.md
 ├── epics/
 │   ├── 001-foundation-bot.md
 │   ├── 002-backend-api-oauth.md
