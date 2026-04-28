@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models import Link
+from src.models import Link, User
 
 
 class LinkService:
@@ -13,7 +13,7 @@ class LinkService:
         self.db = db
 
     async def list(self, filters: dict[str, Any]) -> tuple[list[Link], int]:
-        query = select(Link)
+        query = select(Link, User.username.label("author_username")).outerjoin(User, Link.author_id == User.id)
         total_query = select(Link.id)
 
         # Filters
@@ -87,7 +87,12 @@ class LinkService:
 
         # Fetch
         result = await self.db.execute(query)
-        links = result.scalars().all()
+        rows = result.all()
+        links = []
+        for row in rows:
+            link = row[0]
+            link.author_username = row[1]
+            links.append(link)
 
         return list(links), total
 

@@ -12,13 +12,13 @@ export default function LoginScreen({ onLogin, discordAuthUrl }: LoginScreenProp
             NaN
           </h1>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-violet-400">
-            cloud platform
+            wiki
           </p>
         </div>
 
         <a
           href={discordAuthUrl}
-          className="inline-flex items-center gap-3 rounded-lg bg-violet-600 px-8 py-3 font-mono text-sm text-white transition-all duration-300 hover:bg-violet-500 hover:shadow-[0_0_24px_rgba(139,92,246,0.4)]"
+          className="inline-flex items-center gap-3 rounded-lg bg-violet-600 px-8 py-3 font-mono text-sm text-white no-underline transition-all duration-300 hover:bg-violet-500 hover:shadow-[0_0_24px_rgba(139,92,246,0.4)]"
         >
           <svg
             width="20"

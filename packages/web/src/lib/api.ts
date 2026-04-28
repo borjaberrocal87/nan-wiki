@@ -23,6 +23,7 @@ export interface LinkItem {
   source: string;
   raw_content: string | null;
   author_id: number | null;
+  author_username: string | null;
   channel_id: number | null;
   channel_name: string | null;
   discord_message_id: number | null;
@@ -85,7 +86,7 @@ export async function exchangeDiscordToken(code: string, state: string): Promise
 }
 
 export async function apiLogout(): Promise<void> {
-  await apiFetch('/api/auth/logout', { method: 'POST' });
+  await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
 }
 
 export interface AuthUser {

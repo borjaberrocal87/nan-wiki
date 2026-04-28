@@ -11,7 +11,7 @@ export default function LinkCard({ link }: LinkCardProps) {
   const sourceKey = (link.source || "other").toLowerCase() as SourceType;
   const sourceConfig = SOURCE_CONFIG[sourceKey] || SOURCE_CONFIG.other;
   const title = link.title || link.url;
-  const authorName = link.author_id ? `User ${link.author_id}` : null;
+  const authorName = link.author_username || (link.author_id ? `User ${link.author_id}` : null);
 
   return (
     <a

@@ -13,6 +13,7 @@ def link_to_dict(link) -> dict:
         "source": link.source,
         "raw_content": link.raw_content,
         "author_id": link.author_id,
+        "author_username": getattr(link, "author_username", None),
         "channel_id": link.channel_id,
         "channel_name": link.discord_channel_name,
         "discord_message_id": link.discord_message_id,

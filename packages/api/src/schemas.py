@@ -16,6 +16,7 @@ class LinkRead(BaseModel):
     source: str
     raw_content: str | None = None
     author_id: int | None = None
+    author_username: str | None = None
     channel_id: int | None = None
     channel_name: str | None = None
     discord_message_id: int | None = None

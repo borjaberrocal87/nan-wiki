@@ -48,22 +48,20 @@ export default function Header() {
         <nav style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           {!checking && user ? (
             <>
-              <Link href="/" style={{
+              <span style={{
                 color: "var(--text-secondary)",
-                textDecoration: "none",
                 fontSize: "13px",
                 padding: "6px 10px",
-                borderRadius: "4px",
-                transition: "color 0.2s",
                 fontWeight: 600,
                 fontFamily: "var(--font-sans)",
               }}>
-                Explore
-              </Link>
+                Welcome, {user.username}
+              </span>
               <button
                 onClick={async () => {
                   await apiLogout();
-                  window.location.href = "/";
+                  document.cookie = 'nan_wiki_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                  window.location.href = '/';
                 }}
                 style={{
                   background: "none",

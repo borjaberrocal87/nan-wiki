@@ -156,4 +156,4 @@ async def logout(response: Response):
         expires=0,
         samesite="lax",
     )
-    return RedirectResponse(url="/", status_code=303)
+    return {"ok": True}
