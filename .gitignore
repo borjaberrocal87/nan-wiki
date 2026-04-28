@@ -3,6 +3,7 @@
 .env.local
 .env.development
 .env.production
+.env.*.local
 
 # Dependencies
 node_modules/
@@ -11,6 +12,9 @@ packages/*/node_modules/
 # Build output
 packages/web/.next/
 packages/web/out/
+packages/web/public/build/
+packages/api/.mypy_cache/
+packages/api/.pytest_cache/
 
 # Python
 __pycache__/
@@ -41,6 +45,15 @@ Thumbs.db
 
 # Docker build cache
 .docker/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Screenshots / screenshots from debugging
+login-*.png
+login-*.jpg
+*.png
+*.jpg
 
 # Testing coverage
 coverage/
