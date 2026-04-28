@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models import Link, Source, User
+from src.models import Channel, Link, Source, User
 
 
 class LinkService:
@@ -27,8 +27,11 @@ class LinkService:
 
         if filters.get("tags"):
             tag_list = filters["tags"]
-            query = query.where(Link.tags.overlap(tag_list))
-            total_query = total_query.where(Link.tags.overlap(tag_list))
+            if isinstance(tag_list, str):
+                tag_list = [tag_list]
+            if isinstance(tag_list, list) and len(tag_list) > 0:
+                query = query.where(Link.tags.overlap(tag_list))
+                total_query = total_query.where(Link.tags.overlap(tag_list))
 
         if filters.get("domain"):
             query = query.where(Link.domain == filters["domain"])
@@ -51,19 +54,17 @@ class LinkService:
             total_query = total_query.where(Link.posted_at <= filters["date_to"])
 
         if filters.get("search_query"):
-            search = filters["search_query"]
-            search_vector = func.to_tsvector(
-                "english",
-                func.coalesce(Link.title, "")
-                + " ' ' "
-                + func.coalesce(Link.description, "")
-                + " ' ' "
-                + Link.url,
+            search = f"%{filters['search_query']}%"
+            query = query.where(
+                (Link.title.ilike(search))
+                | (Link.description.ilike(search))
+                | (Link.url.ilike(search))
             )
-            search_query = func.to_tsquery("english", search)
-
-            query = query.where(search_vector.op("@@")(search_query))
-            total_query = total_query.where(search_vector.op("@@")(search_query))
+            total_query = total_query.where(
+                (Link.title.ilike(search))
+                | (Link.description.ilike(search))
+                | (Link.url.ilike(search))
+            )
 
         # Sorting
         sort_field = filters.get("sort", "posted_at")
@@ -108,3 +109,33 @@ class LinkService:
     async def get_sources(self) -> list[Source]:
         result = await self.db.execute(select(Source))
         return list(result.scalars().all())
+
+    async def get_authors(self) -> list[dict[str, Any]]:
+        result = await self.db.execute(
+            select(User.id, User.username, func.count(Link.id).label("link_count"))
+            .join(Link, User.id == Link.author_id)
+            .group_by(User.id)
+            .order_by(func.count(Link.id).desc())
+        )
+        return [{"id": str(row[0]), "username": row[1], "linkCount": row[2]} for row in result.all()]
+
+    async def get_channels(self) -> list[dict[str, Any]]:
+        result = await self.db.execute(
+            select(Channel.id, Channel.name, func.count(Link.id).label("link_count"))
+            .join(Link, Channel.id == Link.channel_id)
+            .group_by(Channel.id)
+            .order_by(func.count(Link.id).desc())
+        )
+        return [{"id": str(row[0]), "name": row[1], "linkCount": row[2]} for row in result.all()]
+
+    async def get_tags(self) -> list[dict[str, Any]]:
+        result = await self.db.execute(
+            select(
+                func.unnest(Link.tags).label("tag"),
+                func.count(Link.id).label("link_count")
+            )
+            .where(Link.tags != [])
+            .group_by("tag")
+            .order_by(func.count(Link.id).desc())
+        )
+        return [{"tag": row[0], "linkCount": row[1]} for row in result.all()]
