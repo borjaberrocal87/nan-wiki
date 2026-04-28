@@ -8,6 +8,15 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database import Base
 
 
+class Source(Base):
+    __tablename__ = "sources"
+
+    id: Mapped[str] = mapped_column(VARCHAR(50), primary_key=True)
+    name: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
+
+    links = relationship("Link", back_populates="source")
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -40,7 +49,7 @@ class Link(Base):
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True)
     url: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     domain: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
-    source: Mapped[str] = mapped_column(VARCHAR(50), nullable=False)
+    source_id: Mapped[str] = mapped_column(VARCHAR(50), ForeignKey("sources.id"), nullable=False)
     raw_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     author_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.id"), nullable=True)
     channel_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("channels.id"), nullable=True)
@@ -61,6 +70,7 @@ class Link(Base):
 
     author = relationship("User", back_populates="links")
     channel = relationship("Channel", back_populates="links")
+    source = relationship("Source", back_populates="links")
 
 
 class ChatConversation(Base):
@@ -92,7 +102,7 @@ class ChatMessage(Base):
 
 
 # Índices
-Index("idx_links_source", Link.source)
+Index("idx_links_source_id", Link.source_id)
 Index("idx_links_posted_at", desc(Link.posted_at))
 Index("idx_links_domain", Link.domain)
 Index(

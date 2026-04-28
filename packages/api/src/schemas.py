@@ -6,6 +6,20 @@ from typing import Annotated
 from pydantic import BaseModel, Field, FieldValidationInfo, field_validator
 
 
+# ── Source schemas ────────────────────────────────────────────────────────────
+
+
+class SourceRead(BaseModel):
+    id: str
+    name: str
+
+    model_config = {"from_attributes": True}
+
+
+class SourcesResponse(BaseModel):
+    data: list[SourceRead]
+
+
 # ── Link schemas ──────────────────────────────────────────────────────────────
 
 
@@ -13,7 +27,8 @@ class LinkRead(BaseModel):
     id: str
     url: str
     domain: str
-    source: str
+    source_id: str
+    source_name: str | None = None
     raw_content: str | None = None
     author_id: int | None = None
     author_username: str | None = None
@@ -33,7 +48,7 @@ class LinkRead(BaseModel):
 
 
 class LinkFilter(BaseModel):
-    source: str | None = None
+    source_id: str | None = None
     tags: list[str] | None = None
     domain: str | None = None
     channel_id: int | None = None
@@ -77,10 +92,6 @@ class LinkDetailResponse(BaseModel):
     data: LinkRead
 
 
-class SourcesResponse(BaseModel):
-    data: list[dict[str, str]]
-
-
 class TopAuthor(BaseModel):
     username: str
     linkCount: int
@@ -94,3 +105,8 @@ class StatsResponse(BaseModel):
     userLinkCount: int
     contributionPercent: int
     topAuthors: list[TopAuthor]
+
+
+class SourceSeed(BaseModel):
+    id: str
+    name: str

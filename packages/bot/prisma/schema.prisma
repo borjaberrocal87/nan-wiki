@@ -31,11 +31,20 @@ model Channel {
   @@map("channels")
 }
 
+model Source {
+  id    String @id @map("id")
+  name  String
+  links Link[]
+
+  @@map("sources")
+}
+
 model Link {
   id                  String    @id @default(uuid()) @map("id") @db.Uuid
   url                 String    @unique
   domain              String
-  source              String
+  sourceId            String    @map("source_id")
+  source              Source    @relation(fields: [sourceId], references: [id])
   rawContent          String?   @map("raw_content") @db.Text
   authorId            BigInt?   @map("author_id")
   author              User?     @relation(fields: [authorId], references: [id])
@@ -53,7 +62,7 @@ model Link {
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
-  @@index([source])
+  @@index([sourceId])
   @@index([postedAt(order: Desc)])
   @@index([domain])
 

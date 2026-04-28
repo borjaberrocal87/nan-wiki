@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models import Link, User
+from src.models import Link, Source, User
 
 
 class LinkService:
@@ -13,13 +13,17 @@ class LinkService:
         self.db = db
 
     async def list(self, filters: dict[str, Any]) -> tuple[list[Link], int]:
-        query = select(Link, User.username.label("author_username")).outerjoin(User, Link.author_id == User.id)
+        query = (
+            select(Link, User.username.label("author_username"), Source.name.label("source_name"))
+            .outerjoin(User, Link.author_id == User.id)
+            .join(Source, Link.source_id == Source.id)
+        )
         total_query = select(Link.id)
 
         # Filters
-        if filters.get("source"):
-            query = query.where(Link.source == filters["source"])
-            total_query = total_query.where(Link.source == filters["source"])
+        if filters.get("source_id"):
+            query = query.where(Link.source_id == filters["source_id"])
+            total_query = total_query.where(Link.source_id == filters["source_id"])
 
         if filters.get("tags"):
             tag_list = filters["tags"]
@@ -92,6 +96,7 @@ class LinkService:
         for row in rows:
             link = row[0]
             link.author_username = row[1]
+            link.source_name = row[2]
             links.append(link)
 
         return list(links), total
@@ -100,6 +105,6 @@ class LinkService:
         result = await self.db.execute(select(Link).where(Link.id == link_id))
         return result.scalar_one_or_none()
 
-    async def get_sources(self) -> list[str]:
-        result = await self.db.execute(select(Link.source).distinct())
-        return [row[0] for row in result.all()]
+    async def get_sources(self) -> list[Source]:
+        result = await self.db.execute(select(Source))
+        return list(result.scalars().all())

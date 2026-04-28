@@ -56,7 +56,7 @@ function buildConfirmEmbed(detected: DetectedUrl[]): EmbedBuilder {
       {
         name: 'Links',
         value: detected
-          .map((d) => `- ${d.url} \`${d.source}\``)
+          .map((d) => `- ${d.url} \`${d.sourceId}\``)
           .join('\n'),
       }
     )
@@ -123,13 +123,34 @@ async function ensureChannel(channelId: string, guildId: string, channelName: st
   }
 }
 
+async function ensureSource(sourceId: string): Promise<void> {
+  const sourceNames: Record<string, string> = {
+    github: 'GitHub',
+    twitter: 'Twitter',
+    youtube: 'YouTube',
+    twitch: 'Twitch',
+    linkedin: 'LinkedIn',
+    reddit: 'Reddit',
+    medium: 'Medium',
+    blog: 'Blog',
+    other: 'Link',
+  };
+  const name = sourceNames[sourceId] || 'Link';
+  await prisma.source.upsert({
+    where: { id: sourceId },
+    create: { id: sourceId, name },
+    update: {},
+  });
+}
+
 async function saveLink(
   url: string,
   domain: string,
-  source: string,
+  sourceId: string,
   message: Message
 ): Promise<boolean> {
   try {
+    await ensureSource(sourceId);
     const userExists = await ensureUser(message);
     let channelExists = true;
     if (message.channelId && message.guildId) {
@@ -140,7 +161,7 @@ async function saveLink(
       data: {
         url,
         domain,
-        source,
+        sourceId,
         rawContent: message.content.slice(0, 500),
         authorId: userExists ? BigInt(message.author.id) : undefined,
         channelId: channelExists && message.channelId ? BigInt(message.channelId) : undefined,
@@ -192,7 +213,7 @@ export async function handleMessageCreate(message: Message): Promise<void> {
 
   for (const link of detected) {
     try {
-      const saved = await saveLink(link.url, link.domain, link.source, message);
+      const saved = await saveLink(link.url, link.domain, link.sourceId, message);
       if (!saved) {
         hasDuplicate = true;
         continue;

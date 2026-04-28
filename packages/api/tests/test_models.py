@@ -1,7 +1,7 @@
-from datetime import UTC
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.models import Link, User
+from src.models import Link, Source, User
 
 
 class TestModels:
@@ -20,13 +20,17 @@ class TestModels:
         user = User()
         assert user.is_admin is False
 
+    def test_source_model(self):
+        source = Source(id="github", name="GitHub")
+        assert source.id == "github"
+        assert source.name == "GitHub"
+
     def test_link_with_all_fields(self):
-        from datetime import datetime
         link = Link(
             id="550e8400-e29b-41d4-a716-446655440000",
             url="https://github.com/test/repo",
             domain="github.com",
-            source="github",
+            source_id="github",
             posted_at=datetime.now(UTC),
             title="Test Repo",
             description="A test repository",
@@ -35,6 +39,7 @@ class TestModels:
         assert link.llm_status == "pending"
         assert link.title == "Test Repo"
         assert link.tags == ["test", "python"]
+        assert link.source_id == "github"
 
 
 class TestDatabase:

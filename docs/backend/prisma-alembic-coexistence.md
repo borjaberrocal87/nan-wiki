@@ -33,7 +33,8 @@ model Link {
   id                  UUID       @id @default(uuid()) @map("id")
   url                 String     @unique
   domain              String
-  source              String
+  sourceId            String     @map("source_id")
+  source              Source     @relation(fields: [sourceId], references: [id])
   rawContent          String?    @map("raw_content")
   authorId            BigInt?    @map("author_id")
   author              User?      @relation(fields: [authorId], references: [id])
@@ -53,7 +54,8 @@ class Link(Base):
     id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True)
     url: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     domain: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
-    source: Mapped[str] = mapped_column(VARCHAR(50), nullable=False)
+    source_id: Mapped[str] = mapped_column(VARCHAR(50), ForeignKey("sources.id"), nullable=False)
+    source = relationship("Source", back_populates="links")
     raw_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     author_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     llm_status: Mapped[str] = mapped_column(VARCHAR(20), default="pending")
@@ -82,6 +84,7 @@ class Link(Base):
 - `packages/bot/prisma/schema.prisma` — Prisma schema with `@map()` annotations
 - `packages/api/src/models.py` — SQLAlchemy ORM models
 - `packages/api/migrations/versions/initial.py` — Initial Alembic migration
+- `packages/api/migrations/versions/add_sources_table.py` — Migration that creates the `sources` table and migrates `links.source` to `links.source_id`
 
 ## 🔗 Related agreements
 

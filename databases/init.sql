@@ -28,6 +28,29 @@ CREATE TABLE channels (
     CONSTRAINT pk__channels PRIMARY KEY (id)
 );
 
+-- Sources (static lookup table)
+CREATE TABLE sources (
+    id TEXT NOT NULL
+        CONSTRAINT chk__sources__id__max_length
+            CHECK (length(id) <= 50),
+    name TEXT NOT NULL
+        CONSTRAINT chk__sources__name__max_length
+            CHECK (length(name) <= 100),
+    CONSTRAINT pk__sources PRIMARY KEY (id)
+);
+
+-- Seed sources with known values
+INSERT INTO sources (id, name) VALUES
+    ('github', 'GitHub'),
+    ('twitter', 'Twitter'),
+    ('youtube', 'YouTube'),
+    ('twitch', 'Twitch'),
+    ('linkedin', 'LinkedIn'),
+    ('reddit', 'Reddit'),
+    ('medium', 'Medium'),
+    ('blog', 'Blog'),
+    ('other', 'Link');
+
 -- Captured links
 CREATE TABLE links (
     id UUID DEFAULT gen_random_uuid() NOT NULL,
@@ -37,9 +60,9 @@ CREATE TABLE links (
     domain TEXT NOT NULL
         CONSTRAINT chk__links__domain__max_length
             CHECK (length(domain) <= 255),
-    source TEXT NOT NULL
-        CONSTRAINT chk__links__source__max_length
-            CHECK (length(source) <= 50),
+    source_id TEXT NOT NULL
+        CONSTRAINT chk__links__source_id__max_length
+            CHECK (length(source_id) <= 50),
     raw_content TEXT,
     author_id BIGINT REFERENCES users (id),
     channel_id BIGINT REFERENCES channels (id),
@@ -63,7 +86,8 @@ CREATE TABLE links (
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     CONSTRAINT pk__links PRIMARY KEY (id),
-    CONSTRAINT uk__links__url UNIQUE (url)
+    CONSTRAINT uk__links__url UNIQUE (url),
+    CONSTRAINT fk_links_source_id FOREIGN KEY (source_id) REFERENCES sources (id)
 );
 
 -- Chat conversations
@@ -92,7 +116,7 @@ CREATE TABLE chat_messages (
 );
 
 -- Indices
-CREATE INDEX idx_links_source ON links (source);
+CREATE INDEX idx_links_source_id ON links (source_id);
 CREATE INDEX idx_links_tags ON links USING GIN (tags);
 CREATE INDEX idx_links_posted_at ON links (posted_at DESC);
 CREATE INDEX idx_links_domain ON links (domain);

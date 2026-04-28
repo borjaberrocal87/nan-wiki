@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from datetime import datetime as datetime_now
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dependencies import AuthUser
-from src.models import Link, User
+from src.models import Link, Source, User
 from src.schemas import LinkFilter
 
 
@@ -128,31 +129,31 @@ class TestLinkService:
             id="550e8400-e29b-41d4-a716-446655440000",
             url="https://github.com/test/repo",
             domain="github.com",
-            source="github",
+            source_id="github",
+            source_name="GitHub",
             posted_at=datetime.now(UTC),
             llm_status="done",
             title="Test Repo",
             description="A test repository",
             tags=["test", "python"],
             created_at=datetime.now(UTC),
-            updated_at=datetime.now(UTC),
+            updated_at=datetime_now(UTC),
         )
 
     @pytest.mark.asyncio
-    async def test_list_links_filters_by_source(self, mock_db, mock_link):
+    async def test_list_links_filters_by_source_id(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
         result_mock = AsyncMock()
-        result_mock.scalars().all.return_value = [mock_link]
-        result_mock.all.return_value = [mock_link.id]
+        result_mock.all.return_value = [(mock_link, None, "GitHub")]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         service = LinkService(mock_db)
-        filters = {"source": "github", "page": 1, "per_page": 20}
+        filters = {"source_id": "github", "page": 1, "per_page": 20}
         links, total = await service.list(filters)
 
         assert len(links) == 1
-        assert links[0].source == "github"
+        assert links[0].source_id == "github"
         assert total == 1
 
     @pytest.mark.asyncio
@@ -217,14 +218,18 @@ class TestLinkService:
     async def test_get_sources(self, mock_db):
         from src.services.link_service import LinkService
 
+        github_source = Source(id="github", name="GitHub")
+        twitter_source = Source(id="twitter", name="Twitter")
         result_mock = AsyncMock()
-        result_mock.all.return_value = [("github",), ("twitter",), ("youtube",)]
+        result_mock.scalars().all.return_value = [github_source, twitter_source]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         service = LinkService(mock_db)
         sources = await service.get_sources()
 
-        assert sources == ["github", "twitter", "youtube"]
+        assert len(sources) == 2
+        assert sources[0].id == "github"
+        assert sources[0].name == "GitHub"
 
     @pytest.mark.asyncio
     async def test_list_links_empty_result(self, mock_db):
@@ -236,7 +241,7 @@ class TestLinkService:
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         service = LinkService(mock_db)
-        filters = {"source": "nonexistent", "page": 1, "per_page": 20}
+        filters = {"source_id": "nonexistent", "page": 1, "per_page": 20}
         links, total = await service.list(filters)
 
         assert links == []
@@ -283,8 +288,8 @@ class TestLinkFilterSchema:
         assert f.per_page == 20
 
     def test_custom_values(self):
-        f = LinkFilter(source="github", sort="title", order="asc", page=2, per_page=50)
-        assert f.source == "github"
+        f = LinkFilter(source_id="github", sort="title", order="asc", page=2, per_page=50)
+        assert f.source_id == "github"
         assert f.sort == "title"
         assert f.order == "asc"
         assert f.page == 2

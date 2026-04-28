@@ -65,7 +65,7 @@ export default function LinkTable({ links }: LinkTableProps) {
           </thead>
           <tbody className="divide-y divide-slate-800/30">
             {links.map((link, index) => {
-              const sourceKey = (link.source || "other").toLowerCase() as SourceType;
+              const sourceKey = (link.source_id || "other").toLowerCase() as SourceType;
               const sourceConfig = SOURCE_CONFIG[sourceKey] || SOURCE_CONFIG.other;
               const domain = extractDomain(link.url);
               const authorName = link.author_username || (link.author_id ? `User ${link.author_id}` : null);

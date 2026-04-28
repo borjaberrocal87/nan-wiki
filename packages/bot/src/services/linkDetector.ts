@@ -6,7 +6,7 @@ const URL_REGEX =
 export interface DetectedUrl {
   url: string;
   domain: string;
-  source: string;
+  sourceId: string;
 }
 
 export function detectUrls(content: string): DetectedUrl[] {
@@ -21,9 +21,9 @@ export function detectUrls(content: string): DetectedUrl[] {
     if (!isValidUrl(url)) continue;
 
     const domain = extractDomain(url);
-    const source = detectSource(url);
+    const sourceId = detectSource(url);
 
-    results.push({ url, domain, source });
+    results.push({ url, domain, sourceId });
   }
 
   return results;

@@ -51,7 +51,7 @@ export default function LinkFilters({
   const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
   const [showChannelDropdown, setShowChannelDropdown] = useState(false);
 
-  const sourcesList = sources.map((s) => s.source);
+  const sourcesList = sources.map((s) => s.id);
   const allTags = useMemo(() => {
     const tagMap = new Map<string, number>();
     for (const tag of tags) {
@@ -67,7 +67,7 @@ export default function LinkFilters({
     const filters: Record<string, string | string[] | null> = {};
 
     if (state.selectedSources.size > 0) {
-      filters.source = Array.from(state.selectedSources);
+      filters.source_id = Array.from(state.selectedSources);
     }
     if (state.selectedTags.size > 0) {
       filters.tags = Array.from(state.selectedTags);

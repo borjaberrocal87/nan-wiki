@@ -72,7 +72,7 @@ Configurar el monorepo, base de datos, infraestructura Docker y el bot de Discor
 **Criterios de aceptación:**
 - [x] Tabla `users` con campos: id (BIGINT PK), username, avatar_url, discriminator, joined_at (DEFAULT now()), is_admin
 - [x] Tabla `channels` con campos: id (BIGINT PK), name, guild_id, category, created_at
-- [x] Tabla `links` con campos: id (UUID), url (UNIQUE), domain, source, raw_content, author_id (FK), channel_id (FK), discord_message_id, discord_channel_name, posted_at, llm_status, title, description, tags, source_detected, embedding (vector(1536)), created_at, updated_at
+- [x] Tabla `links` con campos: id (UUID), url (UNIQUE), domain, source_id (FK → sources), raw_content, author_id (FK), channel_id (FK), discord_message_id, discord_channel_name, posted_at, llm_status, title, description, tags, source_detected, embedding (vector(1536)), created_at, updated_at
 - [x] Tablas `chat_conversations` y `chat_messages`
 - [x] Índices: source, tags (GIN), posted_at DESC, domain, embedding (ivfflat)
 - [x] Migraciones funcionando con SQLAlchemy/alembic (api) y Prisma (bot)
@@ -141,7 +141,7 @@ Configurar el monorepo, base de datos, infraestructura Docker y el bot de Discor
 - [x] Mapeo dominio → source en `packages/shared/src/constants.ts`
 - [x] Dominios conocidos: github.com, x.com, twitter.com, linkedin.com, youtube.com, youtu.be, twitch.tv, reddit.com, medium.com, blogs personales (*), etc.
 - [x] Fuente por defecto: "other" para dominios no reconocidos
-- [x] La fuente se guarda en `links.source` al crear el registro
+- [x] La fuente se guarda en `links.source_id` al crear el registro
 - [x] Función `detectSource(domain)` devuelve string coherente
 - [x] Lista de dominios configurables vía archivo
 

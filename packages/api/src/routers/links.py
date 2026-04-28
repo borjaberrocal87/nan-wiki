@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/links", tags=["links"])
 @router.get("", response_model=LinksListResponse)
 async def list_links_endpoint(
     user: Annotated[AuthUser, Depends(get_current_user_required)],
-    source: str | None = Query(None),
+    source_id: str | None = Query(None, alias="source"),
     tags: str | None = Query(None, description="Comma-separated tag list"),
     domain: str | None = Query(None),
     channel_id: int | None = Query(None),
@@ -30,7 +30,7 @@ async def list_links_endpoint(
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ) -> LinksListResponse:
     filter_obj = LinkFilter(
-        source=source,
+        source_id=source_id,
         tags=tags.split(",") if tags else None,
         domain=domain,
         channel_id=channel_id,

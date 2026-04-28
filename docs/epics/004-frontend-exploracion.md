@@ -105,7 +105,7 @@ El frontend usa un dark theme con paleta violeta inspirada en Material Design 3.
 - Cada filtro es un dropdown o input con `border: 1px solid var(--border-color)`, `background: var(--bg-surface-container)`.
 - Dropdown: `border: 1px solid var(--border-color)`, `border-radius: 4px`, `background: var(--bg-surface-container-lowest)`, sin sombra.
 - Botón "Clear all": `.btn-outline`, texto `var(--text-tertiary)`, hover `border-color: var(--accent-primary-container)` y `color: var(--accent-primary-container)`.
-- Filtros: source (multiselect con checkboxes), tags (multiselect), channel (single select), author (single select), date range (desde/hasta).
+- Filtros: source_id (multiselect con checkboxes), tags (multiselect), channel (single select), author (single select), date range (desde/hasta).
 - Contador de filtros activos visible (mono, color `var(--accent-primary-container)`).
 
 #### Paginación
@@ -208,7 +208,7 @@ El frontend usa un dark theme con paleta violeta inspirada en Material Design 3.
 **Como** usuario, quiero filtrar links por fuente, tags, rango de fechas y canal para refinar los resultados, con el estilo de los componentes de nan.builders.
 
 **Criterios de aceptación:**
-- [x] Filtro por fuente: dropdown con checkboxes (GitHub, Twitter, YouTube, etc.)
+- [x] Filtro por fuente: dropdown con checkboxes (GitHub, Twitter, YouTube, etc.) — usa `source_id`
 - [x] Filtro por tags: dropdown con tags detectados (multiselect)
 - [x] Filtro por rango de fechas: date range picker (desde/hasta)
 - [x] Filtro por canal: dropdown con canales del servidor (single select)

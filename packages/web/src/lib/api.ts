@@ -20,7 +20,8 @@ export interface LinkItem {
   id: string;
   url: string;
   domain: string;
-  source: string;
+  source_id: string;
+  source_name: string | null;
   raw_content: string | null;
   author_id: number | null;
   author_username: string | null;

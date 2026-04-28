@@ -1,8 +1,8 @@
 import { DOMAIN_SOURCE_MAP, DOMAIN_PATTERNS } from './constants.js';
 
 /**
- * Detect the source type of a URL based on its domain.
- * Returns a lowercase source string (e.g., 'github', 'twitter', 'blog', 'other').
+ * Detect the source ID of a URL based on its domain.
+ * Returns a source ID string (e.g., 'github', 'twitter', 'blog', 'other').
  */
 export function detectSource(url: string): string {
   try {
@@ -17,7 +17,7 @@ export function detectSource(url: string): string {
     // Check pattern matching for dynamic domains
     for (const pattern of DOMAIN_PATTERNS) {
       if (pattern.regex.test(domain)) {
-        return pattern.source;
+        return pattern.sourceId;
       }
     }
 

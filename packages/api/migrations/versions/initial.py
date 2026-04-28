@@ -40,13 +40,32 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     )
 
+    # Sources (static lookup table)
+    op.create_table(
+        'sources',
+        sa.Column('id', sa.String(50), primary_key=True),
+        sa.Column('name', sa.String(100), nullable=False),
+    )
+    op.execute("""
+        INSERT INTO sources (id, name) VALUES
+            ('github', 'GitHub'),
+            ('twitter', 'Twitter'),
+            ('youtube', 'YouTube'),
+            ('twitch', 'Twitch'),
+            ('linkedin', 'LinkedIn'),
+            ('reddit', 'Reddit'),
+            ('medium', 'Medium'),
+            ('blog', 'Blog'),
+            ('other', 'Link')
+    """)
+
     # Links
     op.create_table(
         'links',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text('gen_random_uuid()')),
         sa.Column('url', sa.Text(), nullable=False, unique=True),
         sa.Column('domain', sa.String(255), nullable=False),
-        sa.Column('source', sa.String(50), nullable=False),
+        sa.Column('source_id', sa.String(50), nullable=False),
         sa.Column('raw_content', sa.Text(), nullable=True),
         sa.Column('author_id', postgresql.BIGINT, nullable=True),
         sa.Column('channel_id', postgresql.BIGINT, nullable=True),
@@ -63,6 +82,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['author_id'], ['users.id']),
         sa.ForeignKeyConstraint(['channel_id'], ['channels.id']),
+        sa.ForeignKeyConstraint(['source_id'], ['sources.id']),
     )
 
     # Chat conversations
@@ -87,7 +107,7 @@ def upgrade() -> None:
     )
 
     # Indexes
-    op.create_index('idx_links_source', 'links', ['source'])
+    op.create_index('idx_links_source_id', 'links', ['source_id'])
     op.create_index('idx_links_tags', 'links', ['tags'], postgresql_using='gin')
     op.create_index('idx_links_posted_at', 'links', ['posted_at'], postgresql_ops={'posted_at': 'desc'})
     op.create_index('idx_links_domain', 'links', ['domain'])

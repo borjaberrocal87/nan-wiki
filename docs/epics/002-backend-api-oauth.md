@@ -22,7 +22,7 @@ Construir el backend FastAPI con endpoints CRUD de links, el flujo de autenticac
 - [x] Endpoint `GET /api/links` con paginación (offset/limit)
 - [x] Endpoint `GET /api/links/{id}` para obtener un link individual
 - [x] Endpoint `GET /api/links/sources` para listar fuentes disponibles
-- [x] Filtros query params: `source`, `tags`, `domain`, `channel`, `author_id`, `date_from`, `date_to`
+- [x] Filtros query params: `source_id`, `tags`, `domain`, `channel`, `author_id`, `date_from`, `date_to`
 - [x] Ordenación: `sort=posted_at|title` y `order=asc|desc`
 - [x] Respuestas paginadas: `{ data: [], total: N, page: N, per_page: N }`
 - [x] Pydantic schemas para request/response en `packages/api/src/schemas.py`

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.schemas import LinkFilter, LinksListResponse, LinkDetailResponse, LinkRead, SourcesResponse
+from src.schemas import LinkFilter, LinksListResponse, LinkDetailResponse, LinkRead, SourcesResponse, SourceRead
 
 
 def link_to_dict(link) -> dict:
@@ -10,7 +10,8 @@ def link_to_dict(link) -> dict:
         "id": str(link.id),
         "url": link.url,
         "domain": link.domain,
-        "source": link.source,
+        "source_id": link.source_id,
+        "source_name": getattr(link, "source_name", None),
         "raw_content": link.raw_content,
         "author_id": link.author_id,
         "author_username": getattr(link, "author_username", None),
@@ -52,7 +53,7 @@ async def get_link(db: AsyncSession, link_id: str) -> LinkDetailResponse | None:
 async def get_sources(db: AsyncSession) -> SourcesResponse:
     link_service = _get_link_service(db)
     sources = await link_service.get_sources()
-    return SourcesResponse(data=[{"source": s} for s in sources])
+    return SourcesResponse(data=[SourceRead(id=s.id, name=s.name) for s in sources])
 
 
 def _get_link_service(db: AsyncSession):

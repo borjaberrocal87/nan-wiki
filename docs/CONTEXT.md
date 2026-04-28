@@ -93,12 +93,23 @@ CREATE TABLE channels (
     created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Fuentes (tabla estática)
+CREATE TABLE sources (
+    id    VARCHAR(50) PRIMARY KEY,             -- github, twitter, youtube, etc.
+    name  VARCHAR(100) NOT NULL                -- GitHub, Twitter, YouTube, etc.
+);
+
+INSERT INTO sources (id, name) VALUES
+    ('github', 'GitHub'), ('twitter', 'Twitter'), ('youtube', 'YouTube'),
+    ('twitch', 'Twitch'), ('linkedin', 'LinkedIn'), ('reddit', 'Reddit'),
+    ('medium', 'Medium'), ('blog', 'Blog'), ('other', 'Link');
+
 -- Links capturados
 CREATE TABLE links (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     url             TEXT NOT NULL UNIQUE,
     domain          VARCHAR(255) NOT NULL,      -- github.com, x.com, etc.
-    source          VARCHAR(50) NOT NULL,       -- github, twitter, youtube, blog, etc.
+    source_id       VARCHAR(50) NOT NULL REFERENCES sources(id),
     raw_content     TEXT,                       -- primer mensaje que contenía el link
     author_id       BIGINT REFERENCES users(id),
     channel_id      BIGINT REFERENCES channels(id),
