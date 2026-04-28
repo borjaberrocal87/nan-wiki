@@ -72,6 +72,8 @@ docs/
 │   ├── not-null-fields.md
 │   ├── table-naming-singular-plural-convention.md
 │   └── text-over-varchar-char-convention.md
+├── frontend/
+│   └── env-urls-oauth.md
 ├── epics/
 │   ├── 001-foundation-bot.md
 │   ├── 002-backend-api-oauth.md
