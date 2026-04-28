@@ -1,44 +1,55 @@
 "use client";
 
+import type { TopAuthor } from "../../lib/api";
+
 interface MetricsCardsProps {
-  totalEntries: number;
+  totalLinks: number;
+  linksToday: number;
+  totalAuthors: number;
   userLinkCount: number;
+  contributionPercent: number;
+  topAuthors: TopAuthor[];
 }
 
-export default function MetricsCards({ totalEntries, userLinkCount }: MetricsCardsProps) {
-  const contributionPercent = totalEntries > 0 ? Math.round((userLinkCount / totalEntries) * 100) : 0;
-
+export default function MetricsCards({
+  totalLinks,
+  linksToday,
+  totalAuthors,
+  userLinkCount,
+  contributionPercent,
+  topAuthors,
+}: MetricsCardsProps) {
   const cards = [
     {
-      title: "Node Health",
-      value: "99.98%",
-      change: "+0.02%",
-      changeColor: "text-emerald-500",
-      icon: "monitoring",
-      progress: 99.9,
-      progressColor: "bg-violet-600",
-      info: "DATABASE_INDEX_A-F [STABLE]",
-    },
-    {
       title: "Total Entries",
-      value: totalEntries.toLocaleString(),
-      change: `LATEST: 12 SEC AGO`,
+      value: totalLinks.toLocaleString(),
+      change: `${linksToday} TODAY`,
       changeColor: "text-slate-500",
       icon: "database",
-      info: "NODE_STATUS: ONLINE",
+      info: `NODES: ${totalAuthors} AUTHORS`,
     },
     {
-      title: "Active Auth",
+      title: "Top Contributors",
       value: null,
-      avatars: [
-        { label: "A", color: "bg-slate-800" },
-        { label: "B", color: "bg-slate-800" },
-        { label: "+12", color: null },
-      ],
-      change: "Session Active",
+      avatars: topAuthors.map((a, i) => ({
+        label: a.username[0].toUpperCase(),
+        color: i === 0 ? "bg-violet-600 text-white" : "bg-slate-800",
+        username: a.username,
+        count: a.linkCount,
+      })),
+      change: "MOST ACTIVE",
+      changeColor: "text-violet-400",
+      icon: "emoji_events",
+    },
+    {
+      title: "Your Contributions",
+      value: `${contributionPercent}%`,
+      change: `${userLinkCount} of ${totalLinks.toLocaleString()}`,
       changeColor: "text-emerald-500",
-      icon: "security",
-      info: "IP_ADDR: 192.168.0.124 [MASKED]",
+      icon: "person_add",
+      progress: contributionPercent,
+      progressColor: "bg-emerald-500",
+      info: `OF ${totalAuthors} AUTHORS`,
     },
   ];
 
@@ -76,15 +87,21 @@ export default function MetricsCards({ totalEntries, userLinkCount }: MetricsCar
                 {card.avatars.map((avatar, i) => (
                   <div
                     key={i}
-                    className={`w-8 h-8 rounded-full border border-slate-900 flex items-center justify-center text-[10px] font-bold text-slate-400 ${avatar.color || "bg-slate-800"}`}
+                    className={`w-8 h-8 rounded-full border border-slate-900 flex items-center justify-center text-[10px] font-bold ${avatar.color}`}
+                    title={avatar.username}
                   >
                     {avatar.label}
                   </div>
                 ))}
               </div>
-              <span className={`text-[10px] ${card.changeColor} font-black uppercase`}>
-                {card.change}
-              </span>
+              <div className="flex flex-col">
+                <span className={`text-[10px] ${card.changeColor} font-black uppercase`}>
+                  {card.change}
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {card.avatars.map((a) => a.username).join(", ")}
+                </span>
+              </div>
             </div>
           )}
 

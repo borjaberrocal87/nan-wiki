@@ -79,3 +79,18 @@ class LinkDetailResponse(BaseModel):
 
 class SourcesResponse(BaseModel):
     data: list[dict[str, str]]
+
+
+class TopAuthor(BaseModel):
+    username: str
+    linkCount: int
+
+
+class StatsResponse(BaseModel):
+    totalLinks: int
+    linksToday: int
+    linksThisWeek: int
+    totalAuthors: int
+    userLinkCount: int
+    contributionPercent: int
+    topAuthors: list[TopAuthor]

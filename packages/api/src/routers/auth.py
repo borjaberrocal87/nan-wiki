@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Annotated
 from urllib.parse import urlencode
 import uuid
@@ -107,7 +107,7 @@ async def discord_callback(
             username=username,
             avatar_url=avatar_url,
             discriminator=discriminator,
-            joined_at=datetime.now(UTC),
+            joined_at=datetime.now(timezone.utc).replace(tzinfo=None),
         )
         db.add(user)
         await db.commit()
@@ -117,7 +117,7 @@ async def discord_callback(
     jwt_payload = {
         "user_id": token_user.id,
         "username": token_user.username,
-        "exp": datetime.now(UTC).timestamp() + 60 * 60 * 24 * 30,
+        "exp": datetime.now(timezone.utc).timestamp() + 60 * 60 * 24 * 30,
     }
     jwt_token = jwt.encode(jwt_payload, settings.JWT_SECRET, algorithm="HS256")
 

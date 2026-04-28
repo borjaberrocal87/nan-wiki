@@ -99,6 +99,25 @@ export interface AuthUser {
   expiresAt: string;
 }
 
+export interface TopAuthor {
+  username: string;
+  linkCount: number;
+}
+
+export interface StatsResponse {
+  totalLinks: number;
+  linksToday: number;
+  linksThisWeek: number;
+  totalAuthors: number;
+  userLinkCount: number;
+  contributionPercent: number;
+  topAuthors: TopAuthor[];
+}
+
 export async function fetchAuthMe(): Promise<AuthUser> {
   return apiFetch<AuthUser>('/api/auth/me');
+}
+
+export async function fetchStats(): Promise<StatsResponse> {
+  return apiFetch<StatsResponse>('/api/stats');
 }

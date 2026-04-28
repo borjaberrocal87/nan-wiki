@@ -11,7 +11,7 @@ import LinkTable from "../links/LinkTable";
 import MetricsCards from "./MetricsCards";
 import { useLinks } from "../../hooks/useLinks";
 import { PER_PAGE } from "../../lib/api-url";
-import { fetchAuthMe, type AuthUser } from "../../lib/api";
+import { fetchAuthMe, fetchStats, type AuthUser, type StatsResponse } from "../../lib/api";
 
 type ViewMode = "grid" | "table";
 
@@ -56,12 +56,14 @@ export default function LinkGrid() {
 
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [stats, setStats] = useState<StatsResponse | null>(null);
   const totalPages = Math.ceil(total / PER_PAGE);
 
   useEffect(() => {
-    fetchAuthMe()
-      .then((u) => setUser(u))
-      .catch(() => setUser(null));
+    Promise.all([
+      fetchAuthMe().then((u) => setUser(u)).catch(() => setUser(null)),
+      fetchStats().then((s) => setStats(s)).catch(() => setStats(null)),
+    ]);
   }, []);
   const activeFilterCount = Object.keys(filters).filter((k) => filters[k] !== null && filters[k] !== "" && filters[k] !== undefined).length;
 
@@ -184,8 +186,12 @@ export default function LinkGrid() {
 
           {!loading && (
             <MetricsCards
-              totalEntries={total}
-              userLinkCount={links.filter((l) => l.author_username === user?.username).length}
+              totalLinks={stats?.totalLinks ?? 0}
+              linksToday={stats?.linksToday ?? 0}
+              totalAuthors={stats?.totalAuthors ?? 0}
+              userLinkCount={stats?.userLinkCount ?? 0}
+              contributionPercent={stats?.contributionPercent ?? 0}
+              topAuthors={stats?.topAuthors ?? []}
             />
           )}
         </>
