@@ -100,6 +100,14 @@ def upgrade() -> None:
         postgresql_ops={'embedding': 'vector_cosine_ops'},
     )
 
+    # Full-text search index using tsvector
+    op.execute(
+        "CREATE INDEX idx_links_fts ON links USING GIN ("
+        "to_tsvector('english', "
+        "coalesce(title, '') || ' ' || coalesce(description, '') || ' ' || url"
+        "))"
+    )
+
 
 def downgrade() -> None:
     op.drop_index('idx_links_embedding', 'links')

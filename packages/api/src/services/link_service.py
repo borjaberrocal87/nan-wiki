@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import Link
@@ -48,16 +48,18 @@ class LinkService:
 
         if filters.get("search_query"):
             search = filters["search_query"]
-            query = query.where(
-                Link.title.ilike(f"%{search}%")
-                | Link.description.ilike(f"%{search}%")
-                | Link.url.ilike(f"%{search}%")
+            search_vector = func.to_tsvector(
+                "english",
+                func.coalesce(Link.title, "")
+                + " ' ' "
+                + func.coalesce(Link.description, "")
+                + " ' ' "
+                + Link.url,
             )
-            total_query = total_query.where(
-                Link.title.ilike(f"%{search}%")
-                | Link.description.ilike(f"%{search}%")
-                | Link.url.ilike(f"%{search}%")
-            )
+            search_query = func.to_tsquery("english", search)
+
+            query = query.where(search_vector.op("@@")(search_query))
+            total_query = total_query.where(search_vector.op("@@")(search_query))
 
         # Sorting
         sort_field = filters.get("sort", "posted_at")

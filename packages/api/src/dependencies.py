@@ -40,7 +40,7 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
-    token: Annotated[str | None, Cookie()] = None,
+    token: Annotated[str, Cookie("nan_wiki_session")] | None = None,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)] = None,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ) -> AuthUser | None:
@@ -49,3 +49,14 @@ async def get_current_user_optional(
     if credentials:
         return await _decode_token(credentials.credentials)
     return None
+
+
+async def get_current_user_required(
+    token: Annotated[str, Cookie("nan_wiki_session")] | None = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)] = None,
+) -> AuthUser:
+    if token:
+        return await _decode_token(token)
+    if credentials:
+        return await _decode_token(credentials.credentials)
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")

@@ -1,80 +1,94 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { isLoggedIn } from "../../lib/auth";
 import { apiLogout } from "../../lib/api";
 
 export default function Header() {
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/login";
   const authenticated = isLoggedIn();
+
+  if (isLoginPage) return null;
 
   return (
     <header style={{
-      position: "sticky",
-      top: 0,
-      zIndex: 100,
-      backgroundColor: "#0a0a0a",
-      borderBottom: "1px solid #1e1e1e",
-      padding: "12px 24px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
+      borderBottom: "1px solid var(--border-color)",
+      backgroundColor: "var(--bg-surface-container-lowest)",
     }}>
-      <Link href="/" style={{
-        color: "#e5e5e5",
-        textDecoration: "none",
-        fontSize: "18px",
-        fontWeight: 600,
-        letterSpacing: "-0.02em",
+      <div style={{
+        maxWidth: "1280px",
+        margin: "0 auto",
+        padding: "0 var(--spacing-gutter, 24px)",
+        height: "56px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
       }}>
-        Link Library
-      </Link>
+        <Link href="/" style={{
+          color: "var(--text-primary)",
+          textDecoration: "none",
+          fontSize: "15px",
+          fontWeight: 700,
+          letterSpacing: "-0.02em",
+          fontFamily: "var(--font-headline)",
+        }}>
+          NaN
+        </Link>
 
-      <nav style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        {authenticated ? (
-          <>
-            <Link href="/" style={{
-              color: "#999",
-              textDecoration: "none",
-              fontSize: "14px",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              transition: "color 0.2s",
-            }}>
-              Explore
-            </Link>
-            <button
-              onClick={async () => {
-                await apiLogout();
-                window.location.href = '/';
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#999",
-                cursor: "pointer",
-                fontSize: "14px",
-                padding: "6px 12px",
+        <nav style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          {authenticated ? (
+            <>
+              <Link href="/" style={{
+                color: "var(--text-secondary)",
+                textDecoration: "none",
+                fontSize: "13px",
+                padding: "6px 10px",
                 borderRadius: "4px",
-              }}
-            >
-              Logout
-            </button>
-          </>
-        ) : (
-          <Link href="/login" style={{
-            backgroundColor: "#e5e5e5",
-            color: "#0a0a0a",
-            padding: "8px 16px",
-            borderRadius: "6px",
-            fontWeight: 500,
-            fontSize: "14px",
-            textDecoration: "none",
-            transition: "opacity 0.2s",
-          }}>
-            Login
-          </Link>
-        )}
-      </nav>
+                transition: "color 0.2s",
+                fontWeight: 600,
+                fontFamily: "var(--font-sans)",
+              }}>
+                Explore
+              </Link>
+              <button
+                onClick={async () => {
+                  await apiLogout();
+                  window.location.href = "/";
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-tertiary)",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  padding: "6px 10px",
+                  borderRadius: "4px",
+                  transition: "color 0.2s",
+                  fontFamily: "var(--font-sans)",
+                  fontWeight: 600,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--text-secondary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--text-tertiary)";
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link href="/login" className="btn-primary" style={{
+              fontSize: "13px",
+              padding: "6px 14px",
+            }}>
+              Login
+            </Link>
+          )}
+        </nav>
+      </div>
     </header>
   );
 }

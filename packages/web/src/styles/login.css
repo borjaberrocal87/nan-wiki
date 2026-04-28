@@ -1,0 +1,152 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --color-secondary-fixed: #e8ddff;
+  --color-surface-container-low: #1c1b1b;
+  --color-secondary: #cebdff;
+  --color-on-tertiary-container: #e2e6ec;
+  --color-on-secondary: #381385;
+  --color-error: #ffb4ab;
+  --color-on-primary-fixed-variant: #5a00c6;
+  --color-primary-fixed-dim: #d2bbff;
+  --color-background: #131313;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-on-surface-variant: #ccc3d8;
+  --color-on-primary-fixed: #25005a;
+  --color-on-background: #e5e2e1;
+  --color-surface-tint: #d2bbff;
+  --color-on-secondary-fixed: #21005e;
+  --color-surface-container-high: #2a2a2a;
+  --color-tertiary-fixed-dim: #c3c7cd;
+  --color-on-error: #690005;
+  --color-tertiary-fixed: #dfe3e9;
+  --color-surface-variant: #353534;
+  --color-on-secondary-fixed-variant: #4f319c;
+  --color-surface-dim: #131313;
+  --color-surface-container-highest: #353534;
+  --color-error-container: #93000a;
+  --color-secondary-fixed-dim: #cebdff;
+  --color-primary: #d2bbff;
+  --color-secondary-container: #4f319c;
+  --color-on-tertiary: #2c3136;
+  --color-on-primary: #3f008e;
+  --color-outline-variant: #4a4455;
+  --color-surface-container: #201f1f;
+  --color-surface-bright: #3a3939;
+  --color-inverse-on-surface: #313030;
+  --color-on-tertiary-fixed-variant: #43474c;
+  --color-primary-fixed: #eaddff;
+  --color-tertiary-container: #62676c;
+  --color-on-error-container: #ffdad6;
+  --color-on-primary-container: #ede0ff;
+  --color-outline: #958da1;
+  --color-tertiary: #c3c7cd;
+  --color-on-secondary-container: #bea8ff;
+  --color-inverse-primary: #732ee4;
+  --color-primary-container: #7c3aed;
+  --color-surface: #131313;
+  --color-inverse-surface: #e5e2e1;
+  --color-on-surface: #e5e2e1;
+}
+
+.login-mesh {
+  background: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.05) 0%, rgba(14, 14, 14, 0) 60%);
+}
+
+.font-body-sm {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.font-label-md {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.font-body-md {
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.font-headline-md {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 24px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.font-headline-lg {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.font-headline-xl {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.font-body-lg {
+  font-family: "Inter", sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.font-code-md {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.gap-xs { gap: 4px; }
+.gap-sm { gap: 8px; }
+.gap-md { gap: 16px; }
+.gap-lg { gap: 24px; }
+.gap-xl { gap: 48px; }
+
+.px-sm { padding-left: 8px; padding-right: 8px; }
+.px-md { padding-left: 16px; padding-right: 16px; }
+.px-lg { padding-left: 24px; padding-right: 24px; }
+
+.py-base { padding-top: 4px; padding-bottom: 4px; }
+.py-md { padding-top: 12px; padding-bottom: 12px; }
+
+.gap-base { gap: 4px; }
+.margin-base { margin: 4px; }
+.margin-sm { margin: 8px; }
+.margin-md { margin: 16px; }
+.margin-lg { margin: 24px; }
+.margin-xl { margin: 48px; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-spinner {
+  animation: spin 0.8s linear infinite;
+  border: 2px solid rgba(237, 221, 255, 0.3);
+  border-top-color: #ede0ff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+}

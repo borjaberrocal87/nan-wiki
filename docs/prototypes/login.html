@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WikiEngine | Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#e8ddff",
+                        "surface-container-low": "#1c1b1b",
+                        "secondary": "#cebdff",
+                        "on-tertiary-container": "#e2e6ec",
+                        "on-secondary": "#381385",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#5a00c6",
+                        "primary-fixed-dim": "#d2bbff",
+                        "on-tertiary-fixed": "#171c20",
+                        "background": "#131313",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-surface-variant": "#ccc3d8",
+                        "on-primary-fixed": "#25005a",
+                        "on-background": "#e5e2e1",
+                        "surface-tint": "#d2bbff",
+                        "on-secondary-fixed": "#21005e",
+                        "surface-container-high": "#2a2a2a",
+                        "tertiary-fixed-dim": "#c3c7cd",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#dfe3e9",
+                        "surface-variant": "#353534",
+                        "on-secondary-fixed-variant": "#4f319c",
+                        "surface-dim": "#131313",
+                        "surface-container-highest": "#353534",
+                        "error-container": "#93000a",
+                        "secondary-fixed-dim": "#cebdff",
+                        "primary": "#d2bbff",
+                        "secondary-container": "#4f319c",
+                        "on-tertiary": "#2c3136",
+                        "on-primary": "#3f008e",
+                        "outline-variant": "#4a4455",
+                        "surface-container": "#201f1f",
+                        "surface-bright": "#3a3939",
+                        "inverse-on-surface": "#313030",
+                        "on-tertiary-fixed-variant": "#43474c",
+                        "primary-fixed": "#eaddff",
+                        "tertiary-container": "#62676c",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#ede0ff",
+                        "outline": "#958da1",
+                        "tertiary": "#c3c7cd",
+                        "on-secondary-container": "#bea8ff",
+                        "inverse-primary": "#732ee4",
+                        "primary-container": "#7c3aed",
+                        "surface": "#131313",
+                        "inverse-surface": "#e5e2e1",
+                        "on-surface": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "lg": "24px",
+                        "margin": "32px",
+                        "base": "4px",
+                        "gutter": "24px",
+                        "xs": "4px",
+                        "container-max": "1280px",
+                        "md": "16px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter", "sans-serif"],
+                        "label-md": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "headline-md": ["Space Grotesk", "sans-serif"],
+                        "headline-lg": ["Space Grotesk", "sans-serif"],
+                        "headline-xl": ["Space Grotesk", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "code-md": ["Inter", "sans-serif"],
+                        "space-grotesk": ["Space Grotesk", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-xl": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "code-md": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0e0e0e; /* surface-container-lowest */
+        }
+        .login-mesh {
+            background: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.05) 0%, rgba(14, 14, 14, 0) 60%);
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface antialiased overflow-hidden">
+<!-- 
+        Note: SideNavBar and TopAppBar are suppressed here 
+        per "Destination Rule" for focused/transactional login screen.
+    -->
+<main class="relative min-h-screen w-full flex flex-col items-center justify-center login-mesh">
+<!-- Background reference element (subtle) -->
+<div class="absolute inset-0 z-0 opacity-10 grayscale pointer-events-none overflow-hidden">
+<img alt="" class="w-full h-full object-cover" data-alt="abstract architectural blueprint with clean geometric lines and deep shadows on a dark industrial background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKEHRcKKtIYSB0EEj9kj7GTk13pGkxoxOZjLeiieu6F-6h2lnMRZykGjdACESa8ThUAbzpoJegB__x_LrYqUKsqpzRwzXL_4mhpO1sJDBNKvi-GO-saJ1DzWOukgcZ1OBK8Gy_sHH3nOoEQUJruE5hiJYneb21-gT1RgfvuoHzvj8YlshWkDVXoSbUqRhMWhP2BQiyaxGqe10iO_aLpRNMIQlX1clYd_NhVeqdA0Cj6071J5myt0NRfFUxBrWVgaHAxhR7AjHdYw"/>
+</div>
+<div class="z-10 flex flex-col items-center gap-xl w-full max-w-sm px-gutter">
+<!-- Header Identity -->
+<div class="text-center space-y-sm">
+<h1 class="font-headline-xl text-on-surface tracking-tighter leading-none">
+                    NaN
+                </h1>
+<p class="font-label-md text-on-surface-variant uppercase tracking-[0.2em] opacity-60">
+                    WikiEngine Terminal
+                </p>
+</div>
+<!-- Action Section -->
+<div class="w-full space-y-md">
+<button class="w-full flex items-center justify-center gap-sm bg-primary-container text-on-primary-container px-lg py-md rounded-lg font-label-md transition-all duration-200 hover:brightness-110 active:scale-[0.98] shadow-[0_0_20px_rgba(124,58,237,0.3)]">
+<span class="material-symbols-outlined" data-icon="login" style="font-variation-settings: 'FILL' 1;">login</span>
+                    LOGIN WITH DISCORD
+                </button>
+<!-- Secondary Option for Technical context -->
+<div class="relative py-base">
+<div aria-hidden="true" class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/30"></div>
+</div>
+<div class="relative flex justify-center text-xs">
+<span class="bg-surface-container-lowest px-sm text-outline font-code-md">OR</span>
+</div>
+</div>
+<button class="w-full flex items-center justify-center gap-sm bg-transparent border border-outline-variant text-on-surface px-lg py-md rounded-lg font-label-md transition-all duration-200 hover:bg-surface-variant/20 active:opacity-80">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+                    GUEST ACCESS
+                </button>
+</div>
+<!-- Footer Lockup -->
+<footer class="mt-xl text-center space-y-base">
+<p class="font-body-sm text-outline opacity-50">
+                    NaN community members only
+                </p>
+<div class="flex items-center justify-center gap-md pt-md border-t border-outline-variant/10">
+<a class="font-label-md text-xs text-outline hover:text-primary transition-colors" href="#">PRIVACY</a>
+<div class="h-1 w-1 bg-outline-variant rounded-full"></div>
+<a class="font-label-md text-xs text-outline hover:text-primary transition-colors" href="#">TERMS</a>
+</div>
+</footer>
+</div>
+<!-- Decorative UI Element (Status Bar) -->
+<div class="fixed bottom-0 left-0 w-full p-lg flex justify-between items-end pointer-events-none">
+<div class="hidden md:block">
+<div class="font-code-md text-[10px] text-outline/40 leading-relaxed uppercase tracking-widest">
+                    SYSTEM_STATUS: IDLE<br/>
+                    LATENCY: 12ms<br/>
+                    REGION: US_EAST_TERMINAL
+                </div>
+</div>
+<div class="flex gap-sm items-center opacity-30">
+<div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+<span class="font-code-md text-[10px] text-outline uppercase tracking-tighter">Live Connection</span>
+</div>
+</div>
+</main>
+</body></html>

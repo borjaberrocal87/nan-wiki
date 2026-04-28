@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.dependencies import AuthUser, get_current_user, get_db
+from src.dependencies import AuthUser, get_current_user_required, get_db
 from src.schemas import LinkDetailResponse, LinkFilter, LinksListResponse, SourcesResponse
 from src.services.links import get_link, get_sources, list_links
 
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/links", tags=["links"])
 
 @router.get("", response_model=LinksListResponse)
 async def list_links_endpoint(
-    user: Annotated[AuthUser, Depends(get_current_user)],
+    user: Annotated[AuthUser, Depends(get_current_user_required)],
     source: str | None = Query(None),
     tags: str | None = Query(None, description="Comma-separated tag list"),
     domain: str | None = Query(None),
@@ -48,7 +48,7 @@ async def list_links_endpoint(
 
 @router.get("/sources", response_model=SourcesResponse)
 async def list_sources(
-    user: Annotated[AuthUser, Depends(get_current_user)],
+    user: Annotated[AuthUser, Depends(get_current_user_required)],
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ) -> SourcesResponse:
     return await get_sources(db)
@@ -56,7 +56,7 @@ async def list_sources(
 
 @router.get("/{link_id}", response_model=LinkDetailResponse)
 async def get_link_endpoint(
-    user: Annotated[AuthUser, Depends(get_current_user)],
+    user: Annotated[AuthUser, Depends(get_current_user_required)],
     link_id: str,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ) -> LinkDetailResponse:

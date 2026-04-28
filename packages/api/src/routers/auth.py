@@ -142,7 +142,7 @@ async def get_me(
 @router.post("/logout")
 async def logout(response: Response):
     response.set_cookie(
-        key="token",
+        key="nan_wiki_session",
         value="",
         path="/",
         httponly=True,
