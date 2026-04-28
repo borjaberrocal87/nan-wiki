@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SearchBar from "../links/SearchBar";
 import LinkFilters from "../links/LinkFilters";
 import Pagination from "../links/Pagination";
 import LinkCard from "../links/LinkCard";
@@ -69,8 +68,6 @@ export default function LinkGrid() {
 
   return (
     <>
-      <SearchBar value={searchQuery} onChange={setSearchQuery} resultCount={total} />
-
       <LinkFilters
         sources={sources}
         onFilterChange={(f) => setFilters(f)}
@@ -78,6 +75,9 @@ export default function LinkGrid() {
         authors={TOTAL_AUTHORS}
         channels={TOTAL_CHANNELS}
         activeFilterCount={activeFilterCount}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        resultCount={total}
       />
 
       <div className="flex items-center justify-between mb-4 gap-3">
