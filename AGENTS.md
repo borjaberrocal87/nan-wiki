@@ -75,6 +75,7 @@ docs/
 ├── frontend/
 │   ├── design-tokens-css.md
 │   ├── env-urls-oauth.md
+│   ├── material-symbols-fontface.md
 │   ├── reusable-component-classes.md
 │   └── tailwind-v3-setup.md
 ├── epics/

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchLinks, fetchSources, type LinkItem, type PaginatedLinksResponse, type SourceItem } from "../lib/api";
-
-const PER_PAGE = 20;
+import { PER_PAGE } from "../lib/api-url";
 const STORAGE_KEY = "link-library-prefers-infinite-scroll";
 
 interface UseLinksOptions {

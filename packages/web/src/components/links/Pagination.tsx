@@ -30,152 +30,78 @@ export default function Pagination({
 
   const pages = getPageNumbers(currentPage, totalPages);
 
-  const pageButtonStyle = (page: number): React.CSSProperties => ({
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: page === currentPage ? "var(--accent-primary-container)" : "transparent",
-    color: page === currentPage ? "var(--text-on-primary-container)" : "var(--text-secondary)",
-    border: `1px solid ${page === currentPage ? "var(--accent-primary-container)" : "var(--border-color)"}`,
-    borderRadius: "4px",
-    fontSize: "13px",
-    fontWeight: page === currentPage ? 600 : 400,
-    cursor: page === currentPage ? "default" : "pointer",
-    transition: "all 0.15s",
-    fontFamily: "var(--font-sans)",
-  });
+  const btnBase = "w-8 h-8 flex items-center justify-center border border-slate-800 text-slate-500 hover:text-white hover:border-violet-500 transition-all text-xs font-bold";
+  const btnActive = "w-8 h-8 flex items-center justify-center border border-violet-500 bg-violet-600/10 text-violet-400 text-xs font-bold";
 
-  const navButtonStyle = (disabled: boolean): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-    padding: "6px 12px",
-    backgroundColor: "transparent",
-    color: disabled ? "var(--text-tertiary)" : "var(--text-secondary)",
-    border: "1px solid var(--border-color)",
-    borderRadius: "4px",
-    fontSize: "13px",
-    cursor: disabled ? "default" : "pointer",
-    transition: "all 0.2s",
-    fontFamily: "var(--font-sans)",
-  });
+  const navBtnBase = "w-8 h-8 flex items-center justify-center border border-slate-800 text-slate-500 hover:text-white hover:border-violet-500 transition-all";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "6px",
-        marginTop: "40px",
-        padding: "16px 0",
-      }}
-    >
-      <button
-        onClick={() => handlePageClick(currentPage - 1)}
-        disabled={currentPage === 1}
-        style={navButtonStyle(currentPage === 1)}
-        onMouseEnter={(e) => {
-          if (currentPage > 1) e.currentTarget.style.borderColor = "var(--accent-primary-container)";
-          if (currentPage > 1) e.currentTarget.style.color = "var(--accent-primary-container)";
-        }}
-        onMouseLeave={(e) => {
-          if (currentPage > 1) e.currentTarget.style.borderColor = "var(--border-color)";
-          if (currentPage > 1) e.currentTarget.style.color = "var(--text-secondary)";
-        }}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-        Prev
-      </button>
+    <div className="p-4 border-t border-slate-800 flex justify-between items-center bg-surface-container-low/50">
+      <div className="text-[12px] text-slate-500 uppercase tracking-widest font-bold">
+        {totalItems > 0
+          ? `Showing ${((currentPage - 1) * perPage) + 1}–${Math.min(currentPage * perPage, totalItems)} of ${totalItems.toLocaleString()} results`
+          : "No results"}
+      </div>
 
-      {pages[0] !== 1 && pages[0] !== undefined && (
-        <>
-          <button
-            onClick={() => handlePageClick(1)}
-            style={pageButtonStyle(1)}
-            onMouseEnter={(e) => {
-              if (1 !== currentPage) e.currentTarget.style.borderColor = "var(--accent-primary-container)";
-            }}
-            onMouseLeave={(e) => {
-              if (1 !== currentPage) e.currentTarget.style.borderColor = "var(--border-color)";
-            }}
-          >
-            1
-          </button>
-          {pages[0] > 2 && (
-            <span style={{ color: "var(--text-tertiary)", fontSize: "13px", padding: "0 2px", fontFamily: "var(--font-mono)" }}>&middot;</span>
-          )}
-        </>
-      )}
-
-      {pages.map((page) => (
+      <div className="flex gap-1">
         <button
-          key={page}
-          onClick={() => handlePageClick(page)}
-          style={pageButtonStyle(page)}
-          onMouseEnter={(e) => {
-            if (page !== currentPage) e.currentTarget.style.borderColor = "var(--accent-primary-container)";
-          }}
-          onMouseLeave={(e) => {
-            if (page !== currentPage) e.currentTarget.style.borderColor = "var(--border-color)";
-          }}
+          onClick={() => handlePageClick(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`${navBtnBase} ${currentPage === 1 ? "opacity-50 cursor-default" : ""}`}
         >
-          {page}
+          <span className="material-symbols-outlined text-sm">chevron_left</span>
         </button>
-      ))}
 
-      {pages[pages.length - 1] !== totalPages && (
-        <>
-          {pages[pages.length - 1] < totalPages - 1 && (
-            <span style={{ color: "var(--text-tertiary)", fontSize: "13px", padding: "0 2px", fontFamily: "var(--font-mono)" }}>&middot;</span>
-          )}
+        {pages[0] !== 1 && pages[0] !== undefined && (
+          <>
+            <button
+              onClick={() => handlePageClick(1)}
+              className={1 === currentPage ? btnActive : btnBase}
+            >
+              1
+            </button>
+            {pages[0] > 2 && (
+              <span className="w-8 h-8 flex items-center justify-center text-slate-500 text-xs font-bold">
+                ...
+              </span>
+            )}
+          </>
+        )}
+
+        {pages.map((page) => (
           <button
-            onClick={() => handlePageClick(totalPages)}
-            style={pageButtonStyle(totalPages)}
-            onMouseEnter={(e) => {
-              if (totalPages !== currentPage) e.currentTarget.style.borderColor = "var(--accent-primary-container)";
-            }}
-            onMouseLeave={(e) => {
-              if (totalPages !== currentPage) e.currentTarget.style.borderColor = "var(--border-color)";
-            }}
+            key={page}
+            onClick={() => handlePageClick(page)}
+            className={page === currentPage ? btnActive : btnBase}
           >
-            {totalPages}
+            {page}
           </button>
-        </>
-      )}
+        ))}
 
-      <button
-        onClick={() => handlePageClick(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        style={navButtonStyle(currentPage === totalPages)}
-        onMouseEnter={(e) => {
-          if (currentPage < totalPages) e.currentTarget.style.borderColor = "var(--accent-primary-container)";
-          if (currentPage < totalPages) e.currentTarget.style.color = "var(--accent-primary-container)";
-        }}
-        onMouseLeave={(e) => {
-          if (currentPage < totalPages) e.currentTarget.style.borderColor = "var(--border-color)";
-          if (currentPage < totalPages) e.currentTarget.style.color = "var(--text-secondary)";
-        }}
-      >
-        Next
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 18l6-6-6-6" />
-        </svg>
-      </button>
+        {pages[pages.length - 1] !== totalPages && (
+          <>
+            {pages[pages.length - 1] < totalPages - 1 && (
+              <span className="w-8 h-8 flex items-center justify-center text-slate-500 text-xs font-bold">
+                ...
+              </span>
+            )}
+            <button
+              onClick={() => handlePageClick(totalPages)}
+              className={totalPages === currentPage ? btnActive : btnBase}
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
 
-      <span style={{
-        fontFamily: "var(--font-mono)",
-        fontSize: "12px",
-        color: "var(--text-tertiary)",
-        marginLeft: "16px",
-        fontVariantNumeric: "tabular-nums",
-      }}>
-        {totalItems > 0 ? `${((currentPage - 1) * perPage) + 1}\u2013${Math.min(currentPage * perPage, totalItems)} of ${totalItems}` : "No results"}
-      </span>
+        <button
+          onClick={() => handlePageClick(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`${navBtnBase} ${currentPage === totalPages ? "opacity-50 cursor-default" : ""}`}
+        >
+          <span className="material-symbols-outlined text-sm">chevron_right</span>
+        </button>
+      </div>
     </div>
   );
 }

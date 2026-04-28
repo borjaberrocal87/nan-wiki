@@ -53,18 +53,11 @@ export default function SearchBar({ value, onChange, resultCount }: SearchBarPro
   };
 
   return (
-    <div style={{ marginBottom: "24px" }}>
+    <div className="mb-6">
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          padding: "0 12px",
-          backgroundColor: "var(--bg-surface-container)",
-          border: `1px solid ${focused ? "var(--accent-primary-container)" : "var(--border-color)"}`,
-          borderRadius: "4px",
-          transition: "all 0.2s",
-        }}
+        className={`flex items-center gap-2.5 px-3 bg-surface-container rounded transition-all duration-200 ${
+          focused ? "border-accent-primary-container" : "border-border-color"
+        } border`}
       >
         <svg
           width="14"
@@ -75,7 +68,7 @@ export default function SearchBar({ value, onChange, resultCount }: SearchBarPro
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ flexShrink: 0 }}
+          className="flex-shrink-0"
         >
           <circle cx="11" cy="11" r="8" />
           <path d="M21 21l-4.35-4.35" />
@@ -89,35 +82,13 @@ export default function SearchBar({ value, onChange, resultCount }: SearchBarPro
           onChange={handleChange}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          style={{
-            flex: 1,
-            backgroundColor: "transparent",
-            border: "none",
-            outline: "none",
-            color: "var(--text-primary)",
-            fontSize: "14px",
-            padding: "10px 0",
-            fontFamily: "var(--font-sans)",
-          }}
+          className="flex-1 bg-transparent border-none outline-none text-text-primary text-base py-2.5 px-0 font-sans"
         />
 
         {inputValue && (
           <button
             onClick={handleClear}
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--text-tertiary)",
-              cursor: "pointer",
-              padding: "2px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "3px",
-              transition: "color 0.15s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-tertiary)")}
+            className="bg-none border-none text-text-tertiary cursor-pointer p-0.5 flex items-center justify-center rounded transition-colors duration-150 hover:text-text-primary"
             title="Clear"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -129,13 +100,7 @@ export default function SearchBar({ value, onChange, resultCount }: SearchBarPro
 
       {resultCount !== undefined && resultCount > 0 && (
         <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "12px",
-            color: "var(--text-tertiary)",
-            marginTop: "8px",
-            paddingLeft: "4px",
-          }}
+          className="font-mono text-xs text-text-tertiary mt-2 pl-1"
         >
           {resultCount} result{resultCount !== 1 ? "s" : ""} for &ldquo;{value}&rdquo;
         </div>

@@ -18,103 +18,40 @@ export default function LinkCard({ link }: LinkCardProps) {
       href={link.url}
       target="_blank"
       rel="noopener noreferrer"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "0",
-        textDecoration: "none",
-        color: "inherit",
-        backgroundColor: "var(--bg-surface-container-lowest)",
-        border: "1px solid var(--border-color)",
-        borderRadius: "4px",
-        padding: "16px 20px",
-        transition: "all 0.2s",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "var(--accent-primary-container)";
-        e.currentTarget.style.boxShadow = "0 0 12px rgba(124, 58, 237, 0.15)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "var(--border-color)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
+      className="flex flex-col gap-0 no-underline text-inherit bg-surface-container-lowest border border-border-color rounded p-4 transition-all duration-200 cursor-pointer hover:border-accent-primary-container hover:shadow-[0_0_12px_rgba(124,58,237,0.15)]"
     >
       {/* Top row: source label + date */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "12px" }}>
-        <span style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "11px",
-          fontWeight: 500,
-          color: "var(--accent-primary-container)",
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-        }}>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="font-mono text-xs font-medium text-accent-primary-container uppercase tracking-[0.05em]">
           {sourceConfig.label}
         </span>
-        <span style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "11px",
-          color: "var(--text-tertiary)",
-        }}>
+        <span className="font-mono text-xs text-text-tertiary">
           {getRelativeDate(link.posted_at)}
         </span>
       </div>
 
       {/* Title */}
-      <h3 style={{
-        margin: "0 0 6px 0",
-        fontSize: "15px",
-        fontWeight: 600,
-        lineHeight: "1.35",
-        color: "var(--text-primary)",
-        letterSpacing: "-0.01em",
-        display: "-webkit-box",
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: "vertical",
-        overflow: "hidden",
-      }}>
+      <h3 className="m-0 mb-1.5 text-base font-semibold leading-[1.35] text-text-primary tracking-[-0.01em] line-clamp-2">
         {title}
       </h3>
 
       {/* Description */}
       {link.description && (
-        <p style={{
-          margin: "0 0 12px 0",
-          fontSize: "13px",
-          color: "var(--text-secondary)",
-          lineHeight: "1.5",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-        }}>
+        <p className="m-0 mb-3 text-sm text-text-secondary leading-[1.5] line-clamp-2">
           {link.description}
         </p>
       )}
 
       {/* Tags — mono badges with border */}
       {link.tags && link.tags.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px" }}>
+        <div className="flex flex-wrap gap-1 mb-3">
           {link.tags.slice(0, 4).map((tag) => (
-            <span key={tag} style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "11px",
-              color: "var(--text-secondary)",
-              border: "1px solid var(--border-outline-variant)",
-              borderRadius: "4px",
-              padding: "2px 8px",
-              backgroundColor: "var(--bg-secondary)",
-            }}>
+            <span key={tag} className="font-mono text-xs text-text-secondary border border-border-outline-variant rounded px-2 py-0.5 bg-secondary">
               {tag}
             </span>
           ))}
           {link.tags.length > 4 && (
-            <span style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "11px",
-              color: "var(--text-tertiary)",
-            }}>
+            <span className="font-mono text-xs text-text-tertiary">
               +{link.tags.length - 4}
             </span>
           )}
@@ -123,40 +60,18 @@ export default function LinkCard({ link }: LinkCardProps) {
 
       {/* Bottom row: author + channel */}
       {(authorName || link.channel_name) && (
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          paddingTop: "10px",
-          borderTop: "1px solid var(--border-color)",
-          marginTop: "auto",
-        }}>
+        <div className="flex items-center gap-2 pt-2.5 mt-auto border-t border-border-color">
           {authorName && (
             <div
-              style={{
-                width: "20px",
-                height: "20px",
-                borderRadius: "50%",
-                backgroundColor: "var(--bg-surface-container)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "10px",
-                fontWeight: 600,
-                color: "var(--text-secondary)",
-              }}
+              className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center text-xs font-semibold text-text-secondary"
               title={authorName}
             >
               {authorName.charAt(0).toUpperCase()}
             </div>
           )}
-          <span style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "11px",
-            color: "var(--text-tertiary)",
-          }}>
-            {authorName && <span style={{ color: "var(--text-secondary)" }}>{authorName}</span>}
-            {authorName && link.channel_name && <span style={{ margin: "0 4px" }}>/</span>}
+          <span className="font-mono text-xs text-text-tertiary">
+            {authorName && <span className="text-text-secondary">{authorName}</span>}
+            {authorName && link.channel_name && <span className="mx-1">/</span>}
             {link.channel_name && <span>#{link.channel_name}</span>}
           </span>
         </div>

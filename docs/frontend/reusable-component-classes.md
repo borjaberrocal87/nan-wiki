@@ -107,5 +107,6 @@ Available component classes:
 
 - [`docs/frontend/design-tokens-css.md`](./design-tokens-css.md) — CSS design tokens
 - [`docs/frontend/tailwind-v3-setup.md`](./tailwind-v3-setup.md) — Tailwind v3 configuration
+- [`docs/frontend/inline-styles-vs-tailwind.md`](./inline-styles-vs-tailwind.md) — When to use inline styles vs Tailwind classes
 
 Doc created by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)’s mascot)

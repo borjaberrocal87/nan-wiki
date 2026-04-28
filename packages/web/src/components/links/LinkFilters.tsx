@@ -167,85 +167,11 @@ export default function LinkFilters({
 
   const hasActive = activeCount > 0;
 
-  const dropdownStyle: React.CSSProperties = {
-    position: "absolute",
-    top: "calc(100% + 4px)",
-    left: 0,
-    backgroundColor: "var(--bg-surface-container-lowest)",
-    border: "1px solid var(--border-color)",
-    borderRadius: "4px",
-    padding: "4px",
-    zIndex: 10,
-    minWidth: "180px",
-    maxHeight: "240px",
-    overflowY: "auto",
-  };
-
-  const triggerButtonStyle = (active: boolean): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    backgroundColor: "var(--bg-surface-container)",
-    border: `1px solid ${active ? "var(--accent-primary-container)" : "var(--border-color)"}`,
-    borderRadius: "4px",
-    padding: "7px 10px",
-    color: "var(--text-primary)",
-    fontSize: "13px",
-    outline: "none",
-    cursor: "pointer",
-    minWidth: "120px",
-    transition: "all 0.2s",
-    fontFamily: "var(--font-sans)",
-    whiteSpace: "nowrap",
-  });
-
-  const dropdownItemStyle = (selected: boolean): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    width: "100%",
-    padding: "5px 6px",
-    backgroundColor: selected ? "var(--bg-surface-container)" : "transparent",
-    border: "none",
-    borderRadius: "4px",
-    color: selected ? "var(--text-primary)" : "var(--text-secondary)",
-    fontSize: "13px",
-    cursor: "pointer",
-    textAlign: "left",
-    fontFamily: "var(--font-sans)",
-  });
-
-  const checkboxStyle = (selected: boolean): React.CSSProperties => ({
-    width: "14px",
-    height: "14px",
-    borderRadius: "3px",
-    border: `1.5px solid ${selected ? "var(--accent-primary-container)" : "var(--border-color)"}`,
-    backgroundColor: selected ? "var(--accent-primary-container)" : "transparent",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  });
-
   return (
-    <div style={{ marginBottom: "32px" }}>
+    <div className="mb-8">
       <button
         onClick={() => setCollapsed(!collapsed)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          backgroundColor: "transparent",
-          border: "none",
-          color: "var(--text-tertiary)",
-          fontSize: "13px",
-          cursor: "pointer",
-          padding: "0 4px 12px",
-          fontFamily: "var(--font-sans)",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-        }}
+        className="flex items-center gap-2 bg-transparent border-none text-text-tertiary text-sm cursor-pointer px-1 pb-3 font-sans font-semibold uppercase tracking-[0.05em]"
       >
         <svg
           width="12"
@@ -255,18 +181,13 @@ export default function LinkFilters({
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
-          style={{ transform: collapsed ? "" : "rotate(90deg)", transition: "transform 0.15s" }}
+          className={`transition-transform duration-150 ${collapsed ? "" : "rotate-90"}`}
         >
           <path d="M9 18l6-6-6-6" />
         </svg>
         Filters
         {hasActive && (
-          <span style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "var(--accent-primary-container)",
-          }}>
+          <span className="font-mono text-xs font-semibold text-accent-primary-container">
             {activeCount}
           </span>
         )}
@@ -274,25 +195,16 @@ export default function LinkFilters({
 
       {!collapsed && (
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-            padding: "16px",
-            backgroundColor: "var(--bg-surface-container-lowest)",
-            borderRadius: "4px",
-            border: "1px solid var(--border-color)",
-          }}
+          className="flex flex-col gap-3 p-4 bg-surface-container-lowest rounded border border-border-color"
         >
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: "200px" }}>
+          <div className="flex gap-2 flex-wrap">
+            <div className="flex-1 min-w-[200px]">
               <input
                 type="text"
                 placeholder="Search links, tags, authors..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="input"
-                style={{ fontSize: "13px", padding: "7px 12px" }}
+                className="input text-sm py-[7px] px-3"
               />
             </div>
 
@@ -301,9 +213,9 @@ export default function LinkFilters({
               () => setShowSourceDropdown(false),
               "Sources",
               sourcesList.length > 0 && filterState.selectedSources.size > 0 ? (
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--text-secondary)" }}>{filterState.selectedSources.size} selected</span>
+                <span className="font-mono text-sm text-text-secondary">{filterState.selectedSources.size} selected</span>
               ) : (
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--text-tertiary)" }}>Sources</span>
+                <span className="font-mono text-sm text-text-tertiary">Sources</span>
               ),
               sourcesList.map((source) => {
                 const sourceKey = source.toLowerCase() as SourceType;
@@ -313,19 +225,26 @@ export default function LinkFilters({
                   <button
                     key={source}
                     onClick={() => toggleSource(source)}
-                    style={dropdownItemStyle(isSelected)}
+                    className="flex items-center gap-2 w-full px-1.5 py-1 bg-surface-container border-none rounded text-primary text-sm cursor-pointer text-left font-sans"
                   >
-                    <span style={checkboxStyle(isSelected)}>
+                    <span
+                      className={`w-3.5 h-3.5 rounded border-[1.5px] flex items-center justify-center flex-shrink-0 ${
+                        isSelected
+                          ? "border-accent-primary-container bg-accent-primary-container"
+                          : "border-border-color bg-transparent"
+                      }`}
+                    >
                       {isSelected && (
                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--bg-primary)" strokeWidth="4" strokeLinecap="round">
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
                       )}
                     </span>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", textTransform: "uppercase" }}>{config.label}</span>
+                    <span className="font-mono text-xs uppercase">{config.label}</span>
                   </button>
                 );
               }),
+              hasActive,
             )}
 
             {allTags.length > 0 &&
@@ -334,9 +253,9 @@ export default function LinkFilters({
                 () => setShowTagDropdown(false),
                 "Tags",
                 filterState.selectedTags.size > 0 ? (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--text-secondary)" }}>{filterState.selectedTags.size} selected</span>
+                  <span className="font-mono text-sm text-text-secondary">{filterState.selectedTags.size} selected</span>
                 ) : (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--text-tertiary)" }}>Tags</span>
+                  <span className="font-mono text-sm text-text-tertiary">Tags</span>
                 ),
                 allTags.map((tag) => {
                   const isSelected = filterState.selectedTags.has(tag);
@@ -344,19 +263,26 @@ export default function LinkFilters({
                     <button
                       key={tag}
                       onClick={() => toggleTag(tag)}
-                      style={dropdownItemStyle(isSelected)}
+                      className="flex items-center gap-2 w-full px-1.5 py-1 bg-surface-container border-none rounded text-primary text-sm cursor-pointer text-left font-sans"
                     >
-                      <span style={checkboxStyle(isSelected)}>
+                      <span
+                        className={`w-3.5 h-3.5 rounded border-[1.5px] flex items-center justify-center flex-shrink-0 ${
+                          isSelected
+                            ? "border-accent-primary-container bg-accent-primary-container"
+                            : "border-border-color bg-transparent"
+                        }`}
+                      >
                         {isSelected && (
                           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--bg-primary)" strokeWidth="4" strokeLinecap="round">
                             <path d="M20 6L9 17l-5-5" />
                           </svg>
                         )}
                       </span>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", overflow: "hidden", textOverflow: "ellipsis" }}>{tag}</span>
+                      <span className="font-mono text-xs overflow-hidden text-ellipsis">{tag}</span>
                     </button>
                   );
                 }),
+                hasActive,
               )}
 
             {channels.length > 0 &&
@@ -365,16 +291,18 @@ export default function LinkFilters({
                 () => setShowChannelDropdown(false),
                 "Channel",
                 filterState.selectedChannelId ? (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--text-secondary)" }}>
+                  <span className="font-mono text-sm text-text-secondary">
                     {channels.find((c) => String(c.id) === filterState.selectedChannelId)?.name || "Channel"}
                   </span>
                 ) : (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--text-tertiary)" }}>Channel</span>
+                  <span className="font-mono text-sm text-text-tertiary">Channel</span>
                 ),
                 <>
                   <button
                     onClick={() => selectChannel("")}
-                    style={dropdownItemStyle(!filterState.selectedChannelId)}
+                    className={`flex items-center gap-2 w-full px-1.5 py-1 border-none rounded text-sm cursor-pointer text-left font-sans ${
+                      !filterState.selectedChannelId ? "bg-surface-container text-primary" : "bg-transparent text-secondary"
+                    }`}
                   >
                     All channels
                   </button>
@@ -382,12 +310,15 @@ export default function LinkFilters({
                     <button
                       key={channel.id}
                       onClick={() => selectChannel(String(channel.id))}
-                      style={dropdownItemStyle(filterState.selectedChannelId === String(channel.id))}
+                      className={`flex items-center gap-2 w-full px-1.5 py-1 border-none rounded text-sm cursor-pointer text-left font-sans ${
+                        filterState.selectedChannelId === String(channel.id) ? "bg-surface-container text-primary" : "bg-transparent text-secondary"
+                      }`}
                     >
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px" }}>#{channel.name}</span>
+                      <span className="font-mono text-xs">#{channel.name}</span>
                     </button>
                   ))}
                 </>,
+                hasActive,
               )}
 
             {authors.length > 0 &&
@@ -396,16 +327,18 @@ export default function LinkFilters({
                 () => setShowAuthorDropdown(false),
                 "Author",
                 filterState.selectedAuthorId ? (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--text-secondary)" }}>
+                  <span className="font-mono text-sm text-text-secondary">
                     {authors.find((a) => String(a.id) === filterState.selectedAuthorId)?.username || "Author"}
                   </span>
                 ) : (
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--text-tertiary)" }}>Author</span>
+                  <span className="font-mono text-sm text-text-tertiary">Author</span>
                 ),
                 <>
                   <button
                     onClick={() => selectAuthor("")}
-                    style={dropdownItemStyle(!filterState.selectedAuthorId)}
+                    className={`flex items-center gap-2 w-full px-1.5 py-1 border-none rounded text-sm cursor-pointer text-left font-sans ${
+                      !filterState.selectedAuthorId ? "bg-surface-container text-primary" : "bg-transparent text-secondary"
+                    }`}
                   >
                     All authors
                   </button>
@@ -413,26 +346,24 @@ export default function LinkFilters({
                     <button
                       key={author.id}
                       onClick={() => selectAuthor(String(author.id))}
-                      style={dropdownItemStyle(filterState.selectedAuthorId === String(author.id))}
+                      className={`flex items-center gap-2 w-full px-1.5 py-1 border-none rounded text-sm cursor-pointer text-left font-sans ${
+                        filterState.selectedAuthorId === String(author.id) ? "bg-surface-container text-primary" : "bg-transparent text-secondary"
+                      }`}
                     >
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px" }}>{author.username}</span>
+                      <span className="font-mono text-xs">{author.username}</span>
                     </button>
                   ))}
                 </>,
+                hasActive,
               )}
 
             <input
               type="date"
               value={filterState.dateFrom}
               onChange={(e) => handleDateFrom(e.target.value)}
-              className="input"
-              style={{
-                fontSize: "13px",
-                padding: "7px 10px",
-                color: filterState.dateFrom ? "var(--text-primary)" : "var(--text-tertiary)",
-                borderColor: filterState.dateFrom ? "var(--accent-primary-container)" : "var(--border-color)",
-                cursor: "pointer",
-              }}
+              className={`input text-sm py-[7px] px-[10px] cursor-pointer ${
+                filterState.dateFrom ? "text-text-primary border-accent-primary-container" : "text-text-tertiary"
+              }`}
               title="From date"
             />
 
@@ -440,35 +371,16 @@ export default function LinkFilters({
               type="date"
               value={filterState.dateTo}
               onChange={(e) => handleDateTo(e.target.value)}
-              className="input"
-              style={{
-                fontSize: "13px",
-                padding: "7px 10px",
-                color: filterState.dateTo ? "var(--text-primary)" : "var(--text-tertiary)",
-                borderColor: filterState.dateTo ? "var(--accent-primary-container)" : "var(--border-color)",
-                cursor: "pointer",
-              }}
+              className={`input text-sm py-[7px] px-[10px] cursor-pointer ${
+                filterState.dateTo ? "text-text-primary border-accent-primary-container" : "text-text-tertiary"
+              }`}
               title="To date"
             />
 
             {hasActive && (
               <button
                 onClick={clearFilters}
-                className="btn-outline"
-                style={{
-                  fontSize: "13px",
-                  padding: "7px 12px",
-                  color: "var(--text-tertiary)",
-                  borderColor: "var(--border-color)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--accent-primary-container)";
-                  e.currentTarget.style.color = "var(--accent-primary-container)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-color)";
-                  e.currentTarget.style.color = "var(--text-tertiary)";
-                }}
+                className="btn-outline font-sans text-sm py-[7px] px-3 border-border-color text-text-tertiary hover:border-accent-primary-container hover:text-accent-primary-container"
               >
                 Clear all
               </button>
@@ -485,9 +397,10 @@ export default function LinkFilters({
     _triggerLabel: string,
     triggerContent: React.ReactNode,
     dropdownContent: React.ReactNode,
+    hasActive: boolean,
   ) {
     return (
-      <div style={{ position: "relative" }}>
+      <div className="relative">
         <button
           onClick={() => {
             if (isOpen) onClose();
@@ -497,21 +410,23 @@ export default function LinkFilters({
             }
           }}
           onMouseDown={(e) => e.preventDefault()}
-          style={triggerButtonStyle(hasActive)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--accent-primary-container)";
-          }}
+          className={`flex items-center gap-1.5 bg-surface-container border rounded py-[7px] px-2.5 text-primary text-sm outline-none cursor-pointer min-w-[120px] transition-all duration-200 font-sans whitespace-nowrap ${
+            hasActive ? "border-accent-primary-container" : "border-border-color"
+          } hover:border-accent-primary-container`}
           onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = hasActive ? "var(--accent-primary-container)" : "var(--border-color)";
           }}
         >
           {triggerContent}
-          <span style={{ color: "var(--text-tertiary)", marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: "11px" }}>&#9662;</span>
+          <span className="text-text-tertiary ml-auto font-mono text-xs">&#9662;</span>
         </button>
         {isOpen && (
           <>
-            <div style={{ position: "fixed", inset: 0, zIndex: 1 }} onClick={onClose} />
-            <div style={dropdownStyle}>
+            <div className="fixed inset-0 z-[1]" onClick={onClose} />
+            <div
+              className="absolute z-10 top-full left-0 bg-surface-container-lowest border border-border-color rounded p-1 min-w-[180px] max-h-[240px] overflow-y-auto"
+              style={{ marginTop: "4px" }}
+            >
               {dropdownContent}
             </div>
           </>

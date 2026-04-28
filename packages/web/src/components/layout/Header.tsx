@@ -34,27 +34,14 @@ export default function Header() {
         alignItems: "center",
         justifyContent: "space-between",
       }}>
-        <Link href="/" style={{
-          color: "var(--text-primary)",
-          textDecoration: "none",
-          fontSize: "15px",
-          fontWeight: 700,
-          letterSpacing: "-0.02em",
-          fontFamily: "var(--font-headline)",
-        }}>
-          NaN
+        <Link href="/" className="header-logo font-mono">
+          Nan <span className="text-[10px] uppercase tracking-widest text-violet-400">wiki</span>
         </Link>
 
         <nav style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           {!checking && user ? (
             <>
-              <span style={{
-                color: "var(--text-secondary)",
-                fontSize: "13px",
-                padding: "6px 10px",
-                fontWeight: 600,
-                fontFamily: "var(--font-sans)",
-              }}>
+              <span className="header-welcome font-mono">
                 Welcome, {user.username}
               </span>
               <button
@@ -63,30 +50,13 @@ export default function Header() {
                   document.cookie = 'nan_wiki_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
                   window.location.href = '/';
                 }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--text-tertiary)",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  padding: "6px 10px",
-                  borderRadius: "4px",
-                  transition: "color 0.2s",
-                  fontFamily: "var(--font-sans)",
-                  fontWeight: 600,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "var(--text-secondary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "var(--text-tertiary)";
-                }}
+                className="header-logout font-mono"
               >
                 Logout
               </button>
             </>
           ) : !checking ? (
-            <Link href="/login" className="btn-primary" style={{
+            <Link href="/login" className="btn-primary font-sans" style={{
               fontSize: "13px",
               padding: "6px 14px",
             }}>
