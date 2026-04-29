@@ -14,28 +14,6 @@ import { fetchAuthMe, fetchStats, type AuthUser, type StatsResponse } from "../.
 
 type ViewMode = "grid" | "table";
 
-const TOTAL_TAGS = [
-  "javascript", "typescript", "python", "react", "vue", "angular", "node",
-  "docker", "kubernetes", "aws", "devops", "css", "html", "git",
-  "tutorial", "guide", "article", "video", "tool", "library", "framework",
-  "api", "database", "performance", "security", "testing", "design",
-];
-
-const TOTAL_AUTHORS = [
-  { id: 1, username: "alice" },
-  { id: 2, username: "bob" },
-  { id: 3, username: "charlie" },
-  { id: 4, username: "diana" },
-  { id: 5, username: "eve" },
-];
-
-const TOTAL_CHANNELS = [
-  { id: 1, name: "general" },
-  { id: 2, name: "sharing" },
-  { id: 3, name: "dev" },
-  { id: 4, name: "resources" },
-];
-
 export default function LinkGrid() {
   const {
     links,
@@ -45,6 +23,9 @@ export default function LinkGrid() {
     page,
     hasMore,
     sources,
+    authors,
+    channels,
+    tags,
     filters,
     searchQuery,
     setPage,
@@ -71,13 +52,14 @@ export default function LinkGrid() {
       <LinkFilters
         sources={sources}
         onFilterChange={(f) => setFilters(f)}
-        tags={TOTAL_TAGS}
-        authors={TOTAL_AUTHORS}
-        channels={TOTAL_CHANNELS}
+        tags={tags}
+        authors={authors}
+        channels={channels}
         activeFilterCount={activeFilterCount}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         resultCount={total}
+        initialFilters={filters}
       />
 
       <div className="flex items-center justify-between mb-4 gap-3">

@@ -46,7 +46,8 @@ export interface PaginatedLinksResponse {
 }
 
 export interface SourceItem {
-  source: string;
+  id: string;
+  name: string;
 }
 
 export interface SourcesResponse {
@@ -70,6 +71,18 @@ export async function fetchLinkById(id: string): Promise<{ data: LinkItem }> {
 
 export async function fetchSources(): Promise<SourcesResponse> {
   return apiFetch<SourcesResponse>('/api/links/sources');
+}
+
+export async function fetchAuthors(): Promise<SourcesResponse> {
+  return apiFetch<SourcesResponse>('/api/links/authors');
+}
+
+export async function fetchChannels(): Promise<SourcesResponse> {
+  return apiFetch<SourcesResponse>('/api/links/channels');
+}
+
+export async function fetchTags(): Promise<SourcesResponse> {
+  return apiFetch<SourcesResponse>('/api/links/tags');
 }
 
 export async function exchangeDiscordToken(code: string, state: string): Promise<{ token: string }> {

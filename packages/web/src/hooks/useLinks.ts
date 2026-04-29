@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { fetchLinks, fetchSources, type LinkItem, type PaginatedLinksResponse, type SourceItem } from "../lib/api";
+import { fetchLinks, fetchSources, fetchAuthors, fetchChannels, fetchTags, type LinkItem, type PaginatedLinksResponse, type SourceItem } from "../lib/api";
 import { PER_PAGE } from "../lib/api-url";
 const STORAGE_KEY = "link-library-prefers-infinite-scroll";
 
@@ -17,6 +17,9 @@ interface UseLinksReturn {
   page: number;
   hasMore: boolean;
   sources: SourceItem[];
+  authors: SourceItem[];
+  channels: SourceItem[];
+  tags: SourceItem[];
   filters: Record<string, string | string[] | null>;
   searchQuery: string;
   setPage: (p: number) => void;
@@ -34,7 +37,7 @@ function parseUrlFilters(): { filters: Record<string, string | string[] | null>;
     for (const [key, value] of params.entries()) {
       if (key === "page") continue;
 
-      if (key === "source" || key === "tags") {
+      if (key === "source_id" || key === "tags") {
         urlFilters[key] = value.split(",").filter(Boolean);
       } else {
         urlFilters[key] = value;
@@ -63,6 +66,9 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
   const [page, setPage] = useState(hasUrlParams ? urlPage : 1);
   const [hasMore, setHasMore] = useState(true);
   const [sources, setSources] = useState<SourceItem[]>([]);
+  const [authors, setAuthors] = useState<SourceItem[]>([]);
+  const [channels, setChannels] = useState<SourceItem[]>([]);
+  const [tags, setTags] = useState<SourceItem[]>([]);
   const [filters, setFiltersState] = useState<Record<string, string | string[] | null>>(
     hasUrlParams ? urlFilters : initialFilters,
   );
@@ -79,11 +85,14 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
     }
   });
 
-  // Fetch sources on mount
+  // Fetch sources, authors, channels, tags on mount
   useEffect(() => {
-    fetchSources()
-      .then((res) => setSources(res.data))
-      .catch(() => {});
+    Promise.all([
+      fetchSources().then((res) => setSources(res.data)).catch(() => {}),
+      fetchAuthors().then((res) => setAuthors(res.data)).catch(() => {}),
+      fetchChannels().then((res) => setChannels(res.data)).catch(() => {}),
+      fetchTags().then((res) => setTags(res.data)).catch(() => {}),
+    ]);
   }, []);
 
   // Sync filters to URL (skip on mount)
@@ -240,6 +249,9 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
     page,
     hasMore,
     sources,
+    authors,
+    channels,
+    tags,
     filters,
     searchQuery,
     setPage,

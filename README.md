@@ -40,7 +40,6 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up --
 #   Web     → ll-web      → http://localhost:3000
 #   Worker  → ll-worker   (LLM processing)
 #   Postgres→ ll-postgres (port 5432)
-#   Redis   → ll-redis    (port 6379)
 ```
 
 ## Development
@@ -105,7 +104,6 @@ See `.env.example` for all variables. Key ones:
 | `DISCORD_GUILD_ID` | Server ID where the bot operates |
 | `OPENAI_API_KEY` | OpenAI API key for LLM processing |
 | `DATABASE_URL` | PostgreSQL connection string |
-| `REDIS_URL` | Redis connection string |
 | `JWT_SECRET` | Secret for JWT session tokens |
 | `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` | OAuth2 credentials |
 

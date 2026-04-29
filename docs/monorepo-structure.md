@@ -42,7 +42,7 @@ link-library/
 │   │   │   ├── schemas.py          # Pydantic request/response schemas
 │   │   │   ├── routers/            # API route handlers
 │   │   │   ├── services/           # Business logic (LLM, search, chatbot, OAuth)
-│   │   │   ├── workers/            # Background workers (Redis queue consumer)
+│   │   │   ├── workers/            # Background workers (DB polling)
 │   │   │   └── dependencies.py     # DI dependencies (DB session, auth)
 │   │   └── tests/                  # API tests
 │   │
@@ -59,7 +59,7 @@ link-library/
 │           └── styles/             # Global styles (Tailwind + custom CSS)
 │
 └── infra/
-    ├── docker-compose.yml          # Full local orchestration (PG, Redis, API, Bot, Worker, Web)
+    ├── docker-compose.yml          # Full local orchestration (PG, API, Bot, Worker, Web)
     ├── docker-compose.dev.yml      # Dev overrides (hot-reload, debug ports)
     └── README.md                   # Deploy instructions
 ```
@@ -76,7 +76,7 @@ link-library/
 - `bot` can import from `shared`
 - `web` can import from `shared`
 - `api` does NOT import from `shared` (Python types live in Pydantic schemas)
-- No cross-imports between `bot`, `api`, and `web` — they communicate via HTTP and Redis
+- No cross-imports between `bot`, `api`, and `web` — they communicate via HTTP
 
 ## 🏆 Benefits
 

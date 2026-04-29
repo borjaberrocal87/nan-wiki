@@ -17,7 +17,7 @@
     /* Text */
     --text-primary: #e5e2e1;
     --text-secondary: #ccc3d8;
-    --text-tertiary: #958da1;
+    --text-tertiary: #a1a1a1;
     --text-on-primary: #3f008e;
     --text-on-primary-container: #ede0ff;
     --text-on-surface: #e5e2e1;
@@ -345,7 +345,6 @@
   }
 
   .header-welcome {
-    color: var(--text-secondary);
     font-size: 13px;
     padding: 6px 10px;
     font-weight: 600;

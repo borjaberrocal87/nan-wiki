@@ -12,26 +12,28 @@ Implementar el pipeline asíncrono que procesa links pendientes: genera título,
 
 ## Historias de Usuario
 
-### HU-3.1 — Cola de procesamiento asíncrona con Redis
+### HU-3.1 — Cola de procesamiento asíncrono con DB polling
 
-**Como** bot de Discord, quiero enviar links a una cola en Redis para que se procesen asíncronamente sin bloquear la respuesta al usuario.
+**Como** bot de Discord, quiero que los links pendientes se procesen de forma asíncrona sin bloquear la respuesta al usuario.
 
 **Criterios de aceptación:**
-- [ ] Redis conectado desde la API
-- [ ] Cola con estructura de tipo list o stream (Redis Streams recomendado)
-- [ ] Endpoint `POST /api/links/process` push a cola (llamado por el bot o API)
-- [ ] Worker consume de la cola y procesa un link a la vez
-- [ ] Si la cola está vacía, el worker espera (polling o blocking pop)
+- [ ] Worker consulta links con `llm_status = 'pending'` desde PostgreSQL
+- [ ] Query usa `FOR UPDATE SKIP LOCKED` para evitar contention entre workers
+- [ ] Query ordenada por `posted_at ASC` (FIFO) con `LIMIT 1`
+- [ ] Worker consume un link a la vez
+- [ ] Si no hay links pending, el worker hace polling cada N segundos (configurable, default 5s)
 - [ ] Control de concurrencia: máximo N workers simultáneos (configurable)
+- [ ] Al empezar procesamiento, el worker actualiza `llm_status` a `'processing'`
+- [ ] Al terminar, actualiza `llm_status` a `'done'` o `'failed'`
 - [ ] Logs de consumo de cola
 
 **Tareas:**
-- [ ] Configurar cliente Redis en `packages/api/src/services/`
-- [ ] Crear `packages/api/src/workers/queue.py` con consumidor de Redis Streams
-- [ ] Implementar push a cola en endpoint API
+- [ ] Crear `packages/api/src/workers/queue.py` con consumer de DB polling
+- [ ] Implementar query `SELECT ... FROM links WHERE llm_status = 'pending' ORDER BY posted_at LIMIT 1 FOR UPDATE SKIP LOCKED`
 - [ ] Configurar N workers con asyncio (tarea configurable, default 3)
+- [ ] Configurar interval de polling (configurable, default 5s)
 - [ ] Añadir worker como servicio en docker-compose.yml
-- [ ] Probar que el bot push a cola y el worker consume
+- [ ] Probar que el worker consume links pending correctamente
 
 **Estimación:** 5h
 
@@ -117,15 +119,15 @@ Implementar el pipeline asíncrono que procesa links pendientes: genera título,
 ## Dependencias entre historias
 
 ```
-HU-3.1 (Redis Queue) ──→ HU-3.2 (LLM Metadata) ──→ HU-3.3 (Embeddings)
+HU-3.1 (DB Polling) ──→ HU-3.2 (LLM Metadata) ──→ HU-3.3 (Embeddings)
 HU-3.2 (LLM Metadata) ──┘
 HU-3.4 (Error Handling) ──┘ (aplica a toda la cadena)
 ```
 
 ## Aceptación de la Epic
 
-- [ ] Bot guarda link con estado `pending` → push a Redis queue
-- [ ] Worker consume de la cola y procesa automáticamente
+- [ ] Bot guarda link con estado `pending` en DB
+- [ ] Worker consume links pending de DB con `FOR UPDATE SKIP LOCKED`
 - [ ] LLM genera título, descripción y tags correctamente
 - [ ] Embedding vectorial generado y guardado en pgvector
 - [ ] Fallback funciona: si el LLM falla, el link sigue visible

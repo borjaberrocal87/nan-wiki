@@ -7,18 +7,19 @@ import { SOURCE_CONFIG, type SourceType } from "../../lib/sources";
 interface LinkFiltersProps {
   sources: SourceItem[];
   onFilterChange: (filters: Record<string, string | string[] | null>) => void;
-  tags?: string[];
-  authors?: Array<{ id: number; username: string }>;
-  channels?: Array<{ id: number; name: string }>;
+  tags?: SourceItem[];
+  authors?: SourceItem[];
+  channels?: SourceItem[];
   activeFilterCount?: number;
   searchQuery?: string;
   onSearchChange?: (value: string) => void;
   resultCount?: number;
+  initialFilters?: Record<string, string | string[] | null>;
 }
 
 interface FilterState {
-  selectedSources: Set<string>;
-  selectedTags: Set<string>;
+  selectedSource: string;
+  selectedTag: string;
   selectedAuthorId: string | null;
   selectedChannelId: string | null;
   dateFrom: string;
@@ -36,26 +37,37 @@ export default function LinkFilters({
   searchQuery: _searchQuery = "",
   onSearchChange: _onSearchChange,
   resultCount,
+  initialFilters = {},
 }: LinkFiltersProps) {
+  const initSource = useMemo(() => {
+    const val = initialFilters.source_id;
+    if (Array.isArray(val)) return val[0] || "";
+    if (typeof val === "string" && val) return val.split(",")[0];
+    return "";
+  }, [initialFilters.source_id]);
+
+  const initTag = useMemo(() => {
+    const val = initialFilters.tags;
+    if (Array.isArray(val)) return val[0] || "";
+    if (typeof val === "string" && val) return val.split(",")[0];
+    return "";
+  }, [initialFilters.tags]);
+
   const [filterState, setFilterState] = useState<FilterState>({
-    selectedSources: new Set(),
-    selectedTags: new Set(),
-    selectedAuthorId: null,
-    selectedChannelId: null,
-    dateFrom: "",
-    dateTo: "",
-    searchMessage: "",
+    selectedSource: initSource,
+    selectedTag: initTag,
+    selectedAuthorId: (initialFilters.author_id as string | null) || null,
+    selectedChannelId: (initialFilters.channel_id as string | null) || null,
+    dateFrom: (initialFilters.date_from as string) || "",
+    dateTo: (initialFilters.date_to as string) || "",
+    searchMessage: (initialFilters.search_query as string) || "",
   });
-  const [showSourceDropdown, setShowSourceDropdown] = useState(false);
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
-  const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
-  const [showChannelDropdown, setShowChannelDropdown] = useState(false);
 
   const sourcesList = sources.map((s) => s.id);
   const allTags = useMemo(() => {
     const tagMap = new Map<string, number>();
     for (const tag of tags) {
-      tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+      tagMap.set(tag.name, (tagMap.get(tag.name) || 0) + 1);
     }
     return Array.from(tagMap.entries())
       .sort((a, b) => b[1] - a[1])
@@ -66,11 +78,11 @@ export default function LinkFilters({
   const emitFilters = (state: FilterState) => {
     const filters: Record<string, string | string[] | null> = {};
 
-    if (state.selectedSources.size > 0) {
-      filters.source_id = Array.from(state.selectedSources);
+    if (state.selectedSource) {
+      filters.source_id = state.selectedSource;
     }
-    if (state.selectedTags.size > 0) {
-      filters.tags = Array.from(state.selectedTags);
+    if (state.selectedTag) {
+      filters.tags = state.selectedTag;
     }
     if (state.selectedAuthorId) {
       filters.author_id = state.selectedAuthorId;
@@ -91,67 +103,51 @@ export default function LinkFilters({
     onFilterChange(filters);
   };
 
-  const toggleSource = (source: string) => {
-    const newSet = new Set(filterState.selectedSources);
-    if (newSet.has(source)) {
-      newSet.delete(source);
-    } else {
-      newSet.add(source);
-    }
-    const newState = { ...filterState, selectedSources: newSet };
+  const selectSource = (source: string) => {
+    const newState: FilterState = { ...filterState, selectedSource: source };
     setFilterState(newState);
     emitFilters(newState);
-    setShowSourceDropdown(false);
   };
 
-  const toggleTag = (tag: string) => {
-    const newSet = new Set(filterState.selectedTags);
-    if (newSet.has(tag)) {
-      newSet.delete(tag);
-    } else {
-      newSet.add(tag);
-    }
-    const newState = { ...filterState, selectedTags: newSet };
+  const selectTag = (tag: string) => {
+    const newState: FilterState = { ...filterState, selectedTag: tag };
     setFilterState(newState);
     emitFilters(newState);
-    setShowTagDropdown(false);
   };
 
   const selectAuthor = (authorId: string) => {
-    const newState = { ...filterState, selectedAuthorId: filterState.selectedAuthorId === authorId ? null : authorId };
+    const newState: FilterState = { ...filterState, selectedAuthorId: filterState.selectedAuthorId === authorId ? null : authorId };
     setFilterState(newState);
     emitFilters(newState);
-    setShowAuthorDropdown(false);
   };
 
   const selectChannel = (channelId: string) => {
-    const newState = { ...filterState, selectedChannelId: filterState.selectedChannelId === channelId ? null : channelId };
+    const newState: FilterState = { ...filterState, selectedChannelId: filterState.selectedChannelId === channelId ? null : channelId };
     setFilterState(newState);
     emitFilters(newState);
-    setShowChannelDropdown(false);
   };
 
   const handleDateFrom = (value: string) => {
-    const newState = { ...filterState, dateFrom: value };
+    const newState: FilterState = { ...filterState, dateFrom: value };
     setFilterState(newState);
     emitFilters(newState);
   };
 
   const handleDateTo = (value: string) => {
-    const newState = { ...filterState, dateTo: value };
+    const newState: FilterState = { ...filterState, dateTo: value };
     setFilterState(newState);
     emitFilters(newState);
   };
 
   const handleSearchMessage = (value: string) => {
-    const newState = { ...filterState, searchMessage: value };
+    const newState: FilterState = { ...filterState, searchMessage: value };
     setFilterState(newState);
     emitFilters(newState);
   };
 
   const activeCount =
-    filterState.selectedSources.size +
-    filterState.selectedTags.size +
+    filterState.selectedSource ? 1 : 0 +
+    filterState.selectedTag ? 1 : 0 +
     (filterState.selectedAuthorId ? 1 : 0) +
     (filterState.selectedChannelId ? 1 : 0) +
     (filterState.dateFrom ? 1 : 0) +
@@ -160,8 +156,8 @@ export default function LinkFilters({
 
   const clearFilters = () => {
     const empty: FilterState = {
-      selectedSources: new Set(),
-      selectedTags: new Set(),
+      selectedSource: "",
+      selectedTag: "",
       selectedAuthorId: null,
       selectedChannelId: null,
       dateFrom: "",
@@ -195,151 +191,70 @@ export default function LinkFilters({
         {/* Source */}
         <div className="flex flex-col gap-0.5 flex-1 min-w-[120px]">
           <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 pl-1">Source</label>
-          {renderMultiSelectDropdown(
-            showSourceDropdown,
-            () => setShowSourceDropdown(false),
-            "Sources",
-            sourcesList.length > 0 && filterState.selectedSources.size > 0 ? (
-              <span className="text-slate-300 text-xs py-1 px-3 truncate">{Array.from(filterState.selectedSources).join(", ")}</span>
-            ) : (
-              <span className="text-slate-500 text-xs py-1 px-3">All Sources</span>
-            ),
-            sourcesList.map((source) => {
-              const sourceKey = source.toLowerCase() as SourceType;
-              const config = SOURCE_CONFIG[sourceKey] || SOURCE_CONFIG.other;
-              const isSelected = filterState.selectedSources.has(source);
-              return (
-                <button
-                  key={source}
-                  onClick={() => toggleSource(source)}
-                  className={`flex items-center gap-2 w-full px-2 py-1.5 text-xs text-left transition-colors ${
-                    isSelected ? "bg-violet-600/20 text-violet-400" : "text-slate-300 hover:bg-slate-800"
-                  }`}
-                >
-                  <span
-                    className={`w-3.5 h-3.5 rounded border-[1.5px] flex items-center justify-center flex-shrink-0 ${
-                      isSelected
-                        ? "border-violet-500 bg-violet-500"
-                        : "border-slate-600 bg-transparent"
-                    }`}
-                  >
-                    {isSelected && (
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round">
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                    )}
-                  </span>
-                  <span>{config.label}</span>
-                </button>
-              );
-            }),
-          )}
+          <select
+            className="w-full bg-slate-900 border border-slate-800 text-xs py-1.5 px-2 rounded focus:outline-none focus:border-violet-500 text-slate-300"
+            value={filterState.selectedSource}
+            onChange={(e) => selectSource(e.target.value)}
+          >
+            <option value="">All Sources</option>
+            {sourcesList.map((source) => (
+              <option key={source} value={source}>
+                {SOURCE_CONFIG[source.toLowerCase() as SourceType]?.label || source}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Author */}
         <div className="flex flex-col gap-0.5 flex-1 min-w-[120px]">
           <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 pl-1">Author</label>
-          {renderMultiSelectDropdown(
-            showAuthorDropdown,
-            () => setShowAuthorDropdown(false),
-            "Authors",
-            filterState.selectedAuthorId ? (
-              <span className="text-slate-300 text-xs py-1 px-3 truncate">
-                {authors.find((a) => String(a.id) === filterState.selectedAuthorId)?.username || "Author"}
-              </span>
-            ) : (
-              <span className="text-slate-500 text-xs py-1 px-3">All Authors</span>
-            ),
-            <>
-              <button
-                onClick={() => selectAuthor("")}
-                className={`w-full px-2 py-1.5 text-xs text-left transition-colors ${
-                  !filterState.selectedAuthorId ? "bg-violet-600/20 text-violet-400" : "text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                All Authors
-              </button>
-              {authors.map((author) => (
-                <button
-                  key={author.id}
-                  onClick={() => selectAuthor(String(author.id))}
-                  className={`w-full px-2 py-1.5 text-xs text-left transition-colors ${
-                    filterState.selectedAuthorId === String(author.id) ? "bg-violet-600/20 text-violet-400" : "text-slate-300 hover:bg-slate-800"
-                  }`}
-                >
-                  {author.username}
-                </button>
-              ))}
-            </>,
-          )}
+          <select
+            className="w-full bg-slate-900 border border-slate-800 text-xs py-1.5 px-2 rounded focus:outline-none focus:border-violet-500 text-slate-300"
+            value={filterState.selectedAuthorId ?? ""}
+            onChange={(e) => selectAuthor(e.target.value)}
+          >
+            <option value="">All Authors</option>
+            {authors.map((author) => (
+              <option key={author.id} value={author.id}>
+                {author.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Channel */}
         <div className="flex flex-col gap-0.5 flex-1 min-w-[120px]">
           <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 pl-1">Channel</label>
-          {renderMultiSelectDropdown(
-            showChannelDropdown,
-            () => setShowChannelDropdown(false),
-            "Channels",
-            filterState.selectedChannelId ? (
-              <span className="text-slate-300 text-xs py-1 px-3 truncate">
-                {channels.find((c) => String(c.id) === filterState.selectedChannelId)?.name || "Channel"}
-              </span>
-            ) : (
-              <span className="text-slate-500 text-xs py-1 px-3">All Channels</span>
-            ),
-            <>
-              <button
-                onClick={() => selectChannel("")}
-                className={`w-full px-2 py-1.5 text-xs text-left transition-colors ${
-                  !filterState.selectedChannelId ? "bg-violet-600/20 text-violet-400" : "text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                All Channels
-              </button>
-              {channels.map((channel) => (
-                <button
-                  key={channel.id}
-                  onClick={() => selectChannel(String(channel.id))}
-                  className={`w-full px-2 py-1.5 text-xs text-left transition-colors ${
-                    filterState.selectedChannelId === String(channel.id) ? "bg-violet-600/20 text-violet-400" : "text-slate-300 hover:bg-slate-800"
-                  }`}
-                >
-                  #{channel.name}
-                </button>
-              ))}
-            </>,
-          )}
+          <select
+            className="w-full bg-slate-900 border border-slate-800 text-xs py-1.5 px-2 rounded focus:outline-none focus:border-violet-500 text-slate-300"
+            value={filterState.selectedChannelId ?? ""}
+            onChange={(e) => selectChannel(e.target.value)}
+          >
+            <option value="">All Channels</option>
+            {channels.map((channel) => (
+              <option key={channel.id} value={channel.id}>
+                #{channel.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Tags */}
         {allTags.length > 0 && (
           <div className="flex flex-col gap-0.5 flex-1 min-w-[120px]">
             <label className="text-[9px] uppercase tracking-widest font-bold text-slate-500 pl-1">Tags</label>
-            {renderMultiSelectDropdown(
-              showTagDropdown,
-              () => setShowTagDropdown(false),
-              "Tags",
-              filterState.selectedTags.size > 0 ? (
-                <span className="text-slate-300 text-xs py-1 px-3 truncate">{filterState.selectedTags.size} selected</span>
-              ) : (
-                <span className="text-slate-500 text-xs py-1 px-3">All Tags</span>
-              ),
-              allTags.map((tag) => {
-                const isSelected = filterState.selectedTags.has(tag);
-                return (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`w-full px-2 py-1.5 text-xs text-left transition-colors ${
-                      isSelected ? "bg-violet-600/20 text-violet-400" : "text-slate-300 hover:bg-slate-800"
-                    }`}
-                  >
-                    <span className="font-mono">{tag}</span>
-                  </button>
-                );
-              }),
-            )}
+            <select
+              className="w-full bg-slate-900 border border-slate-800 text-xs py-1.5 px-2 rounded focus:outline-none focus:border-violet-500 text-slate-300"
+              value={filterState.selectedTag}
+              onChange={(e) => selectTag(e.target.value)}
+            >
+              <option value="">All Tags</option>
+              {allTags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
           </div>
         )}
 
@@ -384,36 +299,4 @@ export default function LinkFilters({
       )}
     </div>
   );
-
-  function renderMultiSelectDropdown(
-    isOpen: boolean,
-    onClose: () => void,
-    _triggerLabel: string,
-    triggerContent: React.ReactNode,
-    dropdownContent: React.ReactNode,
-  ) {
-    return (
-      <div className="relative">
-        <button
-          onClick={() => {
-            if (isOpen) onClose();
-          }}
-          onMouseDown={(e) => e.preventDefault()}
-          className="w-full bg-slate-900 border border-slate-800 text-xs py-1.5 px-3 rounded focus:outline-none focus:border-violet-500 text-left cursor-pointer min-h-[30px] transition-colors overflow-hidden"
-        >
-          {triggerContent}
-        </button>
-        {isOpen && (
-          <>
-            <div className="fixed inset-0 z-[1]" onClick={onClose} />
-            <div
-              className="absolute z-10 top-full left-0 mt-1 bg-slate-900 border border-slate-800 rounded p-1 min-w-[180px] max-h-[240px] overflow-y-auto"
-            >
-              {dropdownContent}
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
 }

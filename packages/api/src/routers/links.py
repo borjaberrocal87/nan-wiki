@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dependencies import AuthUser, get_current_user_required, get_db
-from src.schemas import LinkDetailResponse, LinkFilter, LinksListResponse, SourcesResponse
-from src.services.links import get_link, get_sources, list_links
+from src.schemas import LinkDetailResponse, LinkFilter, LinksListResponse, SourceRead, SourcesResponse
+from src.services.links import get_authors, get_channels, get_link, get_sources, get_tags, list_links
 
 router = APIRouter(prefix="/api/links", tags=["links"])
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/links", tags=["links"])
 @router.get("", response_model=LinksListResponse)
 async def list_links_endpoint(
     user: Annotated[AuthUser, Depends(get_current_user_required)],
-    source_id: str | None = Query(None, alias="source"),
+    source_id: str | None = Query(None),
     tags: str | None = Query(None, description="Comma-separated tag list"),
     domain: str | None = Query(None),
     channel_id: int | None = Query(None),
@@ -52,6 +52,33 @@ async def list_sources(
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ) -> SourcesResponse:
     return await get_sources(db)
+
+
+@router.get("/authors", response_model=SourcesResponse)
+async def list_authors(
+    user: Annotated[AuthUser, Depends(get_current_user_required)],
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> SourcesResponse:
+    result = await get_authors(db)
+    return SourcesResponse(data=[SourceRead(id=a["id"], name=a["username"]) for a in result["data"]])
+
+
+@router.get("/channels", response_model=SourcesResponse)
+async def list_channels(
+    user: Annotated[AuthUser, Depends(get_current_user_required)],
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> SourcesResponse:
+    result = await get_channels(db)
+    return SourcesResponse(data=[SourceRead(id=c["id"], name=c["name"]) for c in result["data"]])
+
+
+@router.get("/tags", response_model=SourcesResponse)
+async def list_tags(
+    user: Annotated[AuthUser, Depends(get_current_user_required)],
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> SourcesResponse:
+    result = await get_tags(db)
+    return SourcesResponse(data=[SourceRead(id=t["tag"], name=t["tag"]) for t in result["data"]])
 
 
 @router.get("/{link_id}", response_model=LinkDetailResponse)

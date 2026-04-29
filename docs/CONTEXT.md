@@ -9,7 +9,7 @@
 | **Frontend** | Next.js 15 (App Router) + TypeScript | SSR para SEO, routing file-based, ecosistema Vercel, TypeScript shared types con backend |
 | **LLM** | OpenAI GPT-4o (o equivalente) | Tool calling fiable para extracción de metadata, bueno generando descripciones concisas |
 | **Base de datos** | PostgreSQL + pgvector | Datos relacionales + embeddings semánticos para búsqueda del chatbot |
-| **Cache/Queue** | Redis | Cola de procesamiento asíncrono (LLM no debe bloquear el bot), rate limiting |
+| **Queue** | PostgreSQL (DB polling) | Cola de procesamiento asíncrono con `FOR UPDATE SKIP LOCKED` para evitar contention entre workers |
 | **Auth** | Discord OAuth2 | El usuario ya usa Discord, OAuth es trivial y seguro |
 | **Contenedores** | Docker + docker-compose | Entornos reproducibles, despliegue consistente dev/prod, orquestación local |
 | **CI/CD** | GitHub Actions → GHCR | Build automático de imágenes, push a GHCR, deploy pull-only en el servidor |
@@ -26,44 +26,44 @@
                     │           DISCORD GATEWAY               │
                     │         (WebSocket Bot Token)           │
                     └──────────────┬──────────────────────────┘
-                                   │
+                                    │
                     ┌──────────────▼──────────────────────────┐
                     │                                           │
               ┌────┴────┐                              ┌───────┴───────┐
-              │  BOT     │                              │   BACKEND    │
-              │ Discord  │───── HTTP POST /api/links ──│   FastAPI    │
+              │  BOT     │   HTTP POST /api/links       │   BACKEND    │
+              │ Discord  │─────────────────────────────│   FastAPI    │
               │ (Node.js)│                              │  (Python)    │
               │  Docker  │                              │   Docker     │
               └──────────┘                              └───────┬───────┘
-                                                                 │
-                    ┌────────────────────────────────────────────┤
-                    │                                            │
-           ┌────────▼────────┐   ┌──────────────┐   ┌───────────▼───────────┐
-           │   PostgreSQL    │   │     Redis     │   │   OpenAI / LLM API   │
-           │  + pgvector     │   │  (queue)     │   │   (descriptions +    │
-           │   Docker        │   │   Docker     │   │    embeddings)        │
-           └─────────────────┘   └──────────────┘   └───────────────────────┘
-                                                                 │
-                    ┌────────────────────────────────────────────┤
-                    │                                            │
-              ┌─────▼─────┐                              ┌───────▼────────┐
-              │  SERVER    │◄──── HTTP / OAuth ────────►│  Frontend      │
-              │  Docker    │                              │  (Next.js)     │
-              │ compose up │                              │   Docker       │
-              └────────────┘                              └────────────────┘
+                                                                  │
+                     ┌────────────────────────────────────────────┤
+                     │                                            │
+            ┌────────▼────────┐   ┌───────────────────────────────▼───────────┐
+            │   PostgreSQL    │   │   OpenAI / LLM API                        │
+            │  + pgvector     │   │   (descriptions + embeddings)             │
+            │   Docker        │   └───────────────────────────────────────────┘
+            └─────────────────┘
+                                                                  │
+                     ┌────────────────────────────────────────────┤
+                     │                                            │
+               ┌─────▼─────┐                              ┌───────▼────────┐
+               │  SERVER    │◄──── HTTP / OAuth ────────►│  Frontend      │
+               │  Docker    │                              │  (Next.js)     │
+               │ compose up │                              │   Docker       │
+               └────────────┘                              └────────────────┘
 ```
 
 **Flujo de datos:**
 
-1. Bot detecta link → guarda registro "pending" en DB → push a Redis queue
-2. Worker consume de Redis → llama a LLM (descripción + tags + embedding) → actualiza registro
+1. Bot detecta link → guarda registro "pending" en DB
+2. Worker consume links pending de DB con `FOR UPDATE SKIP LOCKED` → llama a LLM (descripción + tags + embedding) → actualiza registro
 3. Frontend hace query → API responde desde PostgreSQL
 4. Chatbot: usuario pregunta → API genera embedding → busca similar con pgvector → construye prompt → LLM responde
 
 **Estrategia de contenedización:**
 
 - Cada servicio tiene su propio `Dockerfile` optimizado con multi-stage builds
-- `docker-compose.yml` orquesta todos los servicios en local (bot, api, worker, pg, redis)
+- `docker-compose.yml` orquesta todos los servicios en local (bot, api, worker, pg)
 - Production: GitHub Actions construye imágenes → push a GHCR → servidor hace `docker pull`
 - Todos los servicios corren en el mismo servidor vía `docker compose up`
 - `.dockerignore` en cada paquete para minimizar imagen
@@ -210,7 +210,7 @@ link-library/
 │   │   │   │   ├── chatbot.py      # Chat conversation logic
 │   │   │   │   └── oauth.py        # Discord OAuth verification
 │   │   │   ├── workers/
-│   │   │   │   ├── queue.py        # Redis queue consumer
+│   │   │   │   ├── queue.py        # DB polling worker (FOR UPDATE SKIP LOCKED)
 │   │   │   │   └── process_link.py # LLM processing task
 │   │   │   └── dependencies.py     # DB session, auth deps
 │   │   └── tests/
@@ -263,7 +263,7 @@ link-library/
 │       └── .env
 │
 └── infra/
-    ├── docker-compose.yml          # Orquestación completa local (PG, Redis, API, Bot, Worker)
+    ├── docker-compose.yml          # Orquestación completa local (PG, API, Bot, Worker)
     ├── docker-compose.dev.yml      # Overrides para dev (hot-reload, debug)
     └── README.md                   # Deploy instructions
 ```
@@ -294,7 +294,7 @@ link-library/
 
 ### Hito 3 — LLM pipeline (~20h)
 
-- Worker asíncrono (Redis queue) que procesa links pendientes
+- Worker que consume links pendientes de DB con `FOR UPDATE SKIP LOCKED`
 - Llama a LLM para: título, descripción, tags (3-5)
 - Genera embedding con text-embedding-3-small
 - Actualiza registro en DB

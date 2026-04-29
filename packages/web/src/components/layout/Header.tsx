@@ -52,6 +52,7 @@ export default function Header() {
                 }}
                 className="header-logout font-mono"
               >
+                <span className="material-symbols-outlined text-sm mr-1">logout</span>
                 Logout
               </button>
             </>

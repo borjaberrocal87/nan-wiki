@@ -7,6 +7,9 @@ import LoginBodyWrapper from "../components/layout/LoginBodyWrapper";
 export const metadata: Metadata = {
   title: "NaN Wiki",
   description: "NaN Wiki",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

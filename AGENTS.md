@@ -110,7 +110,6 @@ DISCORD_TOKEN=                    # Bot token
 DISCORD_GUILD_ID=                 # Server ID of Discord
 OPENAI_API_KEY=                   # OpenAI API key for LLM
 JWT_SECRET=                       # Secret for JWT session tokens
-REDIS_URL=                        # Redis connection string (e.g., redis://localhost:6379)
 DATABASE_URL=                     # PostgreSQL connection string (e.g., postgresql://user:pass@localhost:5432/db)
 ```
 

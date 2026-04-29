@@ -19,7 +19,6 @@ Finalizar la aplicación con pulido visual, configuración de despliegue en prod
 **Criterios de aceptación:**
 - [ ] `infra/docker-compose.yml` con todos los servicios:
   - `postgres` (pgvector habilitado, puertos expuestos para debug)
-  - `redis` (puertos expuestos para debug)
   - `api` (FastAPI, mapeo de puertos, healthcheck)
   - `bot` (Discord bot, mapeo de puertos)
   - `worker` (procesamiento asíncrono, mapeo de puertos)
@@ -53,7 +52,7 @@ Finalizar la aplicación con pulido visual, configuración de despliegue en prod
 **Como** sistema, quiero endpoints de health check y logging estructurado para monitorizar el estado de los servicios.
 
 **Criterios de aceptación:**
-- [ ] Endpoint `GET /health` en la API: devuelve `{ status: "ok", uptime: N, db: "connected" | "disconnected", redis: "connected" | "disconnected" }`
+- [ ] Endpoint `GET /health` en la API: devuelve `{ status: "ok", uptime: N, db: "connected" | "disconnected" }`
 - [ ] Endpoint `GET /health` en el bot: devuelve `{ status: "ok", guilds: N, channels: N, links_captured: N, uptime: N }`
 - [ ] Health checks configurados en docker-compose.yml
 - [ ] Logs estructurados en JSON (timestamp, level, service, message, context)

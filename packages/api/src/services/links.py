@@ -56,6 +56,24 @@ async def get_sources(db: AsyncSession) -> SourcesResponse:
     return SourcesResponse(data=[SourceRead(id=s.id, name=s.name) for s in sources])
 
 
+async def get_authors(db: AsyncSession) -> dict:
+    link_service = _get_link_service(db)
+    authors = await link_service.get_authors()
+    return {"data": authors}
+
+
+async def get_channels(db: AsyncSession) -> dict:
+    link_service = _get_link_service(db)
+    channels = await link_service.get_channels()
+    return {"data": channels}
+
+
+async def get_tags(db: AsyncSession) -> dict:
+    link_service = _get_link_service(db)
+    tags = await link_service.get_tags()
+    return {"data": tags}
+
+
 def _get_link_service(db: AsyncSession):
     from src.services.link_service import LinkService
     return LinkService(db)

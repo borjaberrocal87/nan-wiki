@@ -39,9 +39,9 @@ Configurar el monorepo, base de datos, infraestructura Docker y el bot de Discor
 **Como** desarrollador, quiero ejecutar toda la infraestructura local con docker-compose para tener un entorno de desarrollo consistente y reproducible.
 
 **Criterios de aceptación:**
-- [x] `infra/docker-compose.yml` con servicios: postgres, redis, api, bot, worker, web
+- [x] `infra/docker-compose.yml` con servicios: postgres, api, bot, worker, web
 - [x] `infra/docker-compose.dev.yml` con overrides para dev (hot-reload, puertos expuestos)
-- [x] `docker compose up` levanta PG + Redis correctamente
+- [x] `docker compose up` levanta PG correctamente
 - [x] PG con extensión pgvector habilitada
 - [x] Variables de entorno en `.env.example`
 - [x] `docker compose down` limpia contenedores y volúmenes
@@ -167,7 +167,7 @@ HU-1.1 (Monorepo) ──┘
 ## Aceptación de la Epic
 
 - [x] Monorepo funcional con `pnpm install`
-- [x] Docker compose levanta PG + Redis + Bot + API + Worker + Web
+- [x] Docker compose levanta PG + Bot + API + Worker + Web
 - [x] Bot se conecta a Discord y muestra "online" en consola
 - [x] Compartir un link en Discord lo guarda en la BD con estado `pending`
 - [x] La fuente se detecta correctamente para dominios conocidos
