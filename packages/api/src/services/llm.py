@@ -88,15 +88,9 @@ async def generate_link_metadata(
                 },
                 temperature=0.3,
                 max_tokens=500,
-                extra_body={"thinking": {"enabled": False}},
             )
 
-            message = response.choices[0].message
-            content = message.content
-            if content is None:
-                content = getattr(message, 'reasoning_content', None)
-            if content is None:
-                content = message.provider_specific_fields.reasoning_content
+            content = response.choices[0].message.content
             if content is None:
                 logger.warning("LLM returned null content for URL: %s (attempt %d)", url, attempt)
                 continue
