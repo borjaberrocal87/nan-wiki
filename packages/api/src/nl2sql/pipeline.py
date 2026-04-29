@@ -1,31 +1,25 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, date, timezone
-from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from openai import AsyncOpenAI, APIError
+from openai import APIError
 from openai.types.chat import ChatCompletionMessageParam
 from pglast import parse_sql
 
 from src.config import settings
-from src.services.llm import _get_client
 
 logger = logging.getLogger(__name__)
 
 _PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 _NL2SQL_SYSTEM_TEMPLATE = (_PROMPTS_DIR / "nl2sql.system.md").read_text()
-_ROWS2NL_SYSTEM = (_PROMPTS_DIR / "rows2nl.system.md").read_text()
 _SCHEMA_SQL = (_PROMPTS_DIR / "schema.sql").read_text()
 
 _DEFAULT_NL2SQL_MODEL = "claude-sonnet-4-20250514"
-_DEFAULT_ROWS2NL_MODEL = "claude-haiku-4-5-20251001"
 
 
 
@@ -33,19 +27,6 @@ _DEFAULT_ROWS2NL_MODEL = "claude-haiku-4-5-20251001"
 def _get_model(var: str, fallback: str) -> str:
     val = getattr(settings, var, None)
     return val if val else fallback
-
-
-def _json_serializer(obj: Any) -> Any:
-    """Serialize non-JSON-native types for the LLM payload."""
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    if isinstance(obj, Decimal):
-        return float(obj)
-    if isinstance(obj, (bytes, bytearray)):
-        return f"<binary, {len(obj)} bytes>"
-    if isinstance(obj, set):
-        return list(obj)
-    raise TypeError(f"Type {type(obj).__name__} not serializable")
 
 
 def _extract_sql_and_assumptions(raw: str) -> tuple[str, list[str], bool]:
@@ -140,6 +121,70 @@ async def _execute_sql(sql: str, pool: Any) -> tuple[list[dict], int, bool]:
             row_count = max_rows + 1
 
     return rows, row_count, truncated
+
+
+def _format_rows_as_table(rows: list[dict], row_count: int, truncated: bool) -> str:
+    """Format SQL result rows as a text table."""
+    if not rows:
+        return f"No results found."
+
+    columns = list(rows[0].keys())
+    column_widths = {col: len(col) for col in columns}
+
+    for row in rows:
+        for col in columns:
+            value = str(row.get(col, ""))
+            column_widths[col] = max(column_widths[col], len(value))
+
+    header = " | ".join(col.ljust(column_widths[col]) for col in columns)
+    separator = "-+-".join("-" * column_widths[col] for col in columns)
+
+    lines = [header, separator]
+    for row in rows:
+        line = " | ".join(
+            str(row.get(col, "")).ljust(column_widths[col]) for col in columns
+        )
+        lines.append(line)
+
+    result = "\n".join(lines)
+    if truncated:
+        result += f"\n\n... (truncated at {row_count} rows)"
+    else:
+        result += f"\n\n{row_count} row(s)"
+
+    return result
+
+
+def _format_rows_as_table(rows: list[dict], row_count: int, truncated: bool) -> str:
+    """Format SQL result rows as a text table."""
+    if not rows:
+        return "No results found."
+
+    columns = list(rows[0].keys())
+    column_widths = {col: len(col) for col in columns}
+
+    for row in rows:
+        for col in columns:
+            value = str(row.get(col, ""))
+            column_widths[col] = max(column_widths[col], len(value))
+
+    header = " | ".join(col.ljust(column_widths[col]) for col in columns)
+    separator = "-+-".join("-" * column_widths[col] for col in columns)
+
+    lines = [header, separator]
+    for row in rows:
+        line = " | ".join(
+            str(row.get(col, "")).ljust(column_widths[col]) for col in columns
+        )
+        lines.append(line)
+
+    result = "\n".join(lines)
+    if truncated:
+        result += f"\n\n... (truncated at {row_count} rows)"
+    else:
+        result += f"\n\n{row_count} row(s)"
+
+    return result
 
 
 @dataclass
@@ -239,34 +284,10 @@ async def answer(question: str) -> AnswerResult:
         result.truncated = truncated
         logger.info("SQL executed: %d rows (count: %d, truncated: %s)", len(rows), row_count, truncated)
 
-        # ── Stage 4: Rows → NL ────────────────────────────────────────────
+        # ── Stage 4: Format rows as table ──────────────────────────────────
         t0 = asyncio.get_event_loop().time()
-
-        model2 = _get_model("LLM_MODEL_ROWS2NL", _DEFAULT_ROWS2NL_MODEL)
-        system2 = _ROWS2NL_SYSTEM
-
-        rows_payload = {
-            "question": question,
-            "sql": sql,
-            "assumptions": assumptions,
-            "rows": rows,
-            "row_count": row_count,
-            "truncated": truncated,
-        }
-
-        messages2: list[ChatCompletionMessageParam] = [
-            {"role": "system", "content": system2},
-            {"role": "user", "content": json.dumps(rows_payload, default=_json_serializer)},
-        ]
-
-        answer_text = await _call_llm(model2, messages2, temperature=0.2, max_tokens=256)
-        timings["llm2"] = asyncio.get_event_loop().time() - t0
-
-        logger.info("Rows2NL final answer: %s", answer_text[:1000].replace("\n", " "))
-
-        # Strip HTML tags that the LLM sometimes adds
-        answer_text = answer_text.replace("<br><br>", "").replace("<br>", "")
-        result.answer = answer_text.strip()
+        result.answer = _format_rows_as_table(rows, row_count, truncated)
+        timings["format"] = asyncio.get_event_loop().time() - t0
 
     except (APIError, ValueError) as e:
         result.error = f"LLM error: {e}"
@@ -383,49 +404,14 @@ async def answer_stream(question: str):
         # Emit row count chunk so frontend shows "found X results..."
         yield {"type": "rows", "count": row_count, "truncated": truncated}
 
-        # ── Stage 4: Rows → NL (streaming LLM response) ────────────────────
+        # ── Stage 4: Format rows as table ──────────────────────────────────
         t0 = asyncio.get_event_loop().time()
+        table_text = _format_rows_as_table(rows, row_count, truncated)
+        timings["format"] = asyncio.get_event_loop().time() - t0
 
-        model2 = _get_model("LLM_MODEL_ROWS2NL", _DEFAULT_ROWS2NL_MODEL)
-        system2 = _ROWS2NL_SYSTEM
-
-        rows_payload = {
-            "question": question,
-            "sql": sql,
-            "assumptions": assumptions,
-            "rows": rows,
-            "row_count": row_count,
-            "truncated": truncated,
-        }
-
-        messages2: list[ChatCompletionMessageParam] = [
-            {"role": "system", "content": system2},
-            {"role": "user", "content": json.dumps(rows_payload, default=_json_serializer)},
-        ]
-
-        # Stream the LLM response char by char
-        client = _get_client()
-        stream = await client.chat.completions.create(
-            model=model2,
-            messages=messages2,
-            temperature=0.2,
-            max_tokens=256,
-            stream=True,
-        )
-
-        answer_chunks = []
-        async for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta and delta.content:
-                # Strip HTML tags that the LLM sometimes adds
-                cleaned = delta.content.replace("<br><br>", "").replace("<br>", "")
-                answer_chunks.append(cleaned)
-                yield {"type": "chunk", "content": cleaned}
-
-        result.answer = "".join(answer_chunks)
-        timings["llm2"] = asyncio.get_event_loop().time() - t0
-
-        logger.info("Rows2NL final answer: %s", result.answer[:1000].replace("\n", " "))
+        # Stream the table text as a single chunk
+        yield {"type": "chunk", "content": table_text}
+        result.answer = table_text
 
     except (APIError, ValueError) as e:
         yield {"type": "error", "message": "Sorry, I encountered an error generating a response. Please try again."}
@@ -483,27 +469,7 @@ async def _retry_stage1(
         result.row_count = row_count
         result.truncated = truncated
 
-        model2 = _get_model("LLM_MODEL_ROWS2NL", _DEFAULT_ROWS2NL_MODEL)
-        rows_payload = {
-            "question": question,
-            "sql": sql,
-            "assumptions": assumptions,
-            "rows": rows,
-            "row_count": row_count,
-            "truncated": truncated,
-        }
-        messages2: list[ChatCompletionMessageParam] = [
-            {"role": "system", "content": _ROWS2NL_SYSTEM},
-            {"role": "user", "content": json.dumps(rows_payload, default=_json_serializer)},
-        ]
-        answer_text = await _call_llm(model2, messages2, temperature=0.2, max_tokens=256)
-        timings["llm2"] = asyncio.get_event_loop().time() - t0
-
-        logger.info("Rows2NL final answer: %s", answer_text[:1000].replace("\n", " "))
-
-        # Strip HTML tags that the LLM sometimes adds
-        answer_text = answer_text.replace("<br><br>", "").replace("<br>", "")
-        result.answer = answer_text.strip()
+        result.answer = _format_rows_as_table(rows, row_count, truncated)
 
     except (APIError, ValueError) as e:
         result.error = f"LLM error: {e}"
