@@ -18,7 +18,6 @@ class TestLinkToDict:
             url="https://github.com/test/repo",
             domain="github.com",
             source_id="github",
-            raw_content="test content",
             author_id=12345,
             channel_id=67890,
             discord_message_id=111222,
@@ -38,7 +37,6 @@ class TestLinkToDict:
         assert result["url"] == "https://github.com/test/repo"
         assert result["domain"] == "github.com"
         assert result["source_id"] == "github"
-        assert result["raw_content"] == "test content"
         assert result["author_id"] == 12345
         assert result["channel_id"] == 67890
         assert result["discord_message_id"] == 111222

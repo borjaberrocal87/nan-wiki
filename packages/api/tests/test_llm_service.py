@@ -75,7 +75,7 @@ class TestGenerateLinkMetadata:
 
         with patch("src.services.llm._get_client", return_value=mock_client):
             result = await generate_link_metadata(
-                "https://example.com", "test content", "blog"
+                "https://example.com", "blog"
             )
 
         assert result is not None
@@ -96,7 +96,7 @@ class TestGenerateLinkMetadata:
 
         with patch("src.services.llm._get_client", return_value=mock_client):
             result = await generate_link_metadata(
-                "https://example.com", None, "other"
+                "https://example.com", "other"
             )
 
         assert len(result["title"]) == 100
@@ -114,7 +114,7 @@ class TestGenerateLinkMetadata:
 
         with patch("src.services.llm._get_client", return_value=mock_client):
             result = await generate_link_metadata(
-                "https://example.com", None, "other"
+                "https://example.com", "other"
             )
 
         assert len(result["description"]) == 300
@@ -132,7 +132,7 @@ class TestGenerateLinkMetadata:
 
         with patch("src.services.llm._get_client", return_value=mock_client):
             result = await generate_link_metadata(
-                "https://example.com", None, "other"
+                "https://example.com", "other"
             )
 
         assert len(result["tags"]) == 5
@@ -150,7 +150,7 @@ class TestGenerateLinkMetadata:
 
         with patch("src.services.llm._get_client", return_value=mock_client):
             result = await generate_link_metadata(
-                "https://example.com", None, "other", max_retries=2
+                "https://example.com", "other", max_retries=2
             )
 
         assert result is None
@@ -167,25 +167,24 @@ class TestGenerateLinkMetadata:
 
         with patch("src.services.llm._get_client", return_value=mock_client):
             result = await generate_link_metadata(
-                "https://example.com", None, "other", max_retries=1
+                "https://example.com", "other", max_retries=1
             )
 
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_includes_raw_content_in_prompt(self, mock_response):
+    async def test_includes_source_in_prompt(self, mock_response):
         mock_client = AsyncMock()
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
             await generate_link_metadata(
-                "https://example.com", "This is the raw content", "github"
+                "https://example.com", "github"
             )
 
         call_args = mock_client.chat.completions.create.call_args
         messages = call_args.kwargs["messages"]
         user_content = messages[1]["content"]
-        assert "This is the raw content" in user_content
         assert "github" in user_content
 
 

@@ -18,7 +18,6 @@ class TestFetchPendingLink:
             url="https://github.com/test/repo",
             domain="github.com",
             source_id="github",
-            raw_content="test",
             posted_at=datetime.now(UTC),
             llm_status="pending",
             retry_count=0,

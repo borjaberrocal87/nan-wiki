@@ -42,7 +42,7 @@ METADATA_JSON_SCHEMA = {
 
 SYSTEM_PROMPT = """You are a link metadata generator. Your task is to analyze a link and generate appropriate metadata.
 
-Given the URL, raw content (first message containing the link), and source type, produce:
+Given the URL and source type, produce:
 - A concise title (max 100 characters)
 - A brief description (max 300 characters) that summarizes what the link is about
 - 3-5 relevant tags for categorization
@@ -62,7 +62,6 @@ def _get_client() -> AsyncOpenAI:
 
 async def generate_link_metadata(
     url: str,
-    raw_content: str | None,
     source: str,
     max_retries: int = 3,
 ) -> dict[str, Any] | None:
@@ -74,9 +73,6 @@ async def generate_link_metadata(
     client = _get_client()
 
     user_prompt = f"URL: {url}\nSource: {source}"
-    if raw_content:
-        raw_truncated = raw_content[:1000]
-        user_prompt += f"\nContent: {raw_truncated}"
 
     for attempt in range(1, max_retries + 1):
         try:

@@ -12,7 +12,6 @@ def link_to_dict(link) -> dict:
         "domain": link.domain,
         "source_id": link.source_id,
         "source_name": getattr(link, "source_name", None),
-        "raw_content": link.raw_content,
         "author_id": link.author_id,
         "author_username": getattr(link, "author_username", None),
         "channel_id": link.channel_id,

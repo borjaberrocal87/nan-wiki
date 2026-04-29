@@ -29,7 +29,6 @@ class LinkRead(BaseModel):
     domain: str
     source_id: str
     source_name: str | None = None
-    raw_content: str | None = None
     author_id: int | None = None
     author_username: str | None = None
     channel_id: int | None = None

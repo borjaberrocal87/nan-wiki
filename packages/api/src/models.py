@@ -50,7 +50,6 @@ class Link(Base):
     url: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     domain: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     source_id: Mapped[str] = mapped_column(VARCHAR(50), ForeignKey("sources.id"), nullable=False)
-    raw_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     author_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.id"), nullable=True)
     channel_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("channels.id"), nullable=True)
     discord_message_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)

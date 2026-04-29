@@ -66,7 +66,6 @@ def upgrade() -> None:
         sa.Column('url', sa.Text(), nullable=False, unique=True),
         sa.Column('domain', sa.String(255), nullable=False),
         sa.Column('source_id', sa.String(50), nullable=False),
-        sa.Column('raw_content', sa.Text(), nullable=True),
         sa.Column('author_id', postgresql.BIGINT, nullable=True),
         sa.Column('channel_id', postgresql.BIGINT, nullable=True),
         sa.Column('discord_message_id', postgresql.BIGINT, nullable=True),

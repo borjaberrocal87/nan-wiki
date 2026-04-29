@@ -19,7 +19,6 @@ class TestProcessLink:
             url="https://github.com/test/repo",
             domain="github.com",
             source_id="github",
-            raw_content="Check this out: https://github.com/test/repo",
             author_id=12345,
             channel_id=67890,
             posted_at=datetime.now(UTC),
