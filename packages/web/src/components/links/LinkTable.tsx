@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { LinkItem } from "../../lib/api";
 import { SOURCE_CONFIG, type SourceType } from "../../lib/sources";
 
@@ -7,8 +8,11 @@ interface LinkTableProps {
   links: LinkItem[];
 }
 
-function generateId(index: number): string {
-  const num = Math.floor(Math.random() * 9000) + 1000;
+function generateId(linkId: string): string {
+  const hash = linkId.split('').reduce((acc, char) => {
+    return ((acc << 5) - acc + char.charCodeAt(0)) | 0;
+  }, 0);
+  const num = Math.abs(hash) % 9000 + 1000;
   return `#WK-${num}`;
 }
 
@@ -21,16 +25,9 @@ function extractDomain(url: string): string {
   }
 }
 
-function extractPath(url: string): string {
-  try {
-    const { pathname, search, hash } = new URL(url);
-    return pathname + search + hash;
-  } catch {
-    return url;
-  }
-}
-
 export default function LinkTable({ links }: LinkTableProps) {
+  const [tooltip, setTooltip] = useState<{ message: string; x: number; y: number } | null>(null);
+
   return (
     <div className="bg-surface-container-lowest border border-slate-800/50 rounded-lg overflow-hidden flex flex-col">
       <div className="overflow-x-auto">
@@ -41,7 +38,7 @@ export default function LinkTable({ links }: LinkTableProps) {
                 ID
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
-                URL
+                Message
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
                 Domain
@@ -54,9 +51,6 @@ export default function LinkTable({ links }: LinkTableProps) {
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
                 Channel
-              </th>
-              <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
-                Message
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest whitespace-nowrap">
                 Posted At
@@ -81,11 +75,6 @@ export default function LinkTable({ links }: LinkTableProps) {
                   className="hover:bg-slate-900/50 transition-colors group"
                 >
                   {/* ID column */}
-                  <td className="p-4 font-mono text-[12px] text-violet-400">
-                    {generateId(index)}
-                  </td>
-
-                  {/* URL column */}
                   <td className="p-4">
                     <a
                       href={link.url}
@@ -93,13 +82,33 @@ export default function LinkTable({ links }: LinkTableProps) {
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 group/link no-underline"
                     >
-                      <span className="text-slate-300 truncate max-w-[200px] text-sm group-hover/link:text-violet-400 transition-colors">
-                        {extractPath(link.url)}
+                      <span className="font-mono text-[12px] text-violet-400 group-hover/link:text-violet-500 transition-colors">
+                        {generateId(link.id)}
                       </span>
                       <span className="material-symbols-outlined text-xs text-slate-600 group-hover/link:text-violet-500 cursor-pointer flex-shrink-0">
                         open_in_new
                       </span>
                     </a>
+                  </td>
+
+                  {/* Message column */}
+                  <td className="p-4 max-w-xs">
+                    <p
+                      className="text-sm text-slate-400 truncate"
+                      onMouseEnter={(e) => {
+                        if (message.length > 30) {
+                          setTooltip({ message, x: e.clientX, y: e.clientY });
+                        }
+                      }}
+                      onMouseMove={(e) => {
+                        if (tooltip) {
+                          setTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
+                        }
+                      }}
+                      onMouseLeave={() => setTooltip(null)}
+                    >
+                      {message}
+                    </p>
                   </td>
 
                   {/* Domain column */}
@@ -145,13 +154,6 @@ export default function LinkTable({ links }: LinkTableProps) {
                     {link.channel_name ? `#${link.channel_name}` : "\u2014"}
                   </td>
 
-                  {/* Message column */}
-                  <td className="p-4 max-w-xs">
-                    <p className="text-sm text-slate-400 truncate">
-                      {message}
-                    </p>
-                  </td>
-
                   {/* Posted At column */}
                   <td className="p-4 text-sm text-slate-500 whitespace-nowrap">
                     {postedAt}
@@ -162,6 +164,21 @@ export default function LinkTable({ links }: LinkTableProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Tooltip rendered outside the overflow-hidden container */}
+      {tooltip && (
+        <div
+          className="pointer-events-none fixed z-[100] w-64 whitespace-normal break-words rounded-lg border border-slate-700 bg-surface-container-low px-3 py-2 text-sm text-slate-300 shadow-xl"
+          style={{
+            left: tooltip.x + 12,
+            top: tooltip.y - 8,
+            maxHeight: '200px',
+            overflowY: 'auto',
+          }}
+        >
+          {tooltip.message}
+        </div>
+      )}
     </div>
   );
 }
