@@ -132,7 +132,7 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
 
       const searchQ = filters.search_query as string | null;
 
-      if (searchQ && searchQ.trim()) {
+      if (searchQ && searchQ.trim().length >= 3) {
         try {
           const res = await searchLinks(searchQ.trim(), "hybrid", undefined, pageNum, PER_PAGE);
 
@@ -208,15 +208,48 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
   const setSearchQuery = useCallback(
     (q: string) => {
       setSearchQueryState(q);
-      setFiltersState((prev) => ({ ...prev, search_query: q || null }));
+      if (q.trim().length >= 3) {
+        setFiltersState((prev) => ({ ...prev, search_query: q.trim() }));
+      } else {
+        setFiltersState((prev) => {
+          const next = { ...prev };
+          delete next.search_query;
+          return next;
+        });
+      }
     },
     [],
   );
 
   const setFilters = useCallback(
     (f: Record<string, string | string[] | null>) => {
+      const cleaned: Record<string, string | string[] | null> = {};
+      let hasOtherFilters = false;
+      for (const [key, value] of Object.entries(f)) {
+        if (key === "search_query" && typeof value === "string" && value.trim().length < 3) {
+          continue;
+        }
+        hasOtherFilters = true;
+        cleaned[key] = value;
+      }
+      if (!hasOtherFilters) {
+        setFiltersState((prev) => {
+          const prevCleaned: Record<string, string | string[] | null> = {};
+          for (const [key, value] of Object.entries(prev)) {
+            if (key === "search_query" && typeof value === "string" && value.trim().length < 3) {
+              continue;
+            }
+            prevCleaned[key] = value;
+          }
+          if (Object.keys(cleaned).length === Object.keys(prevCleaned).length) {
+            return prev;
+          }
+          return cleaned;
+        });
+        return;
+      }
       setPage(1);
-      setFiltersState(f);
+      setFiltersState(cleaned);
     },
     [],
   );

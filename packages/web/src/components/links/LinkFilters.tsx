@@ -94,7 +94,7 @@ export default function LinkFilters({
     if (state.dateTo) {
       filters.date_to = state.dateTo;
     }
-    if (state.searchMessage) {
+    if (state.searchMessage && state.searchMessage.trim().length >= 3) {
       filters.search_query = state.searchMessage;
     }
 
@@ -140,7 +140,9 @@ export default function LinkFilters({
   const handleSearchMessage = (value: string) => {
     const newState: FilterState = { ...filterState, searchMessage: value };
     setFilterState(newState);
-    emitFilters(newState);
+    if (value.trim().length >= 3) {
+      emitFilters(newState);
+    }
   };
 
   const activeCount =
