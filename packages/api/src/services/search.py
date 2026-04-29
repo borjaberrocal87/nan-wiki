@@ -59,8 +59,9 @@ class SearchService:
         count_sql = text("""
             SELECT COUNT(*)
             FROM links
-            WHERE similarity(COALESCE(title, '') || ' ' || COALESCE(description, ''), :query) > 0.05
-               OR (title || ' ' || COALESCE(description, '')) ILIKE '%' || :query || '%'
+            WHERE llm_status = 'done'
+              AND (similarity(COALESCE(title, '') || ' ' || COALESCE(description, ''), :query) > 0.05
+               OR (title || ' ' || COALESCE(description, '')) ILIKE '%' || :query || '%')
         """)
         count_result = await self.db.execute(count_sql, {"query": query})
         total = count_result.scalar_one()
@@ -94,8 +95,9 @@ class SearchService:
                 JOIN tags t ON t.id = lt.tag_id
                 GROUP BY lt.link_id
             ) tags ON l.id = tags.link_id
-            WHERE similarity(COALESCE(l.title, '') || ' ' || COALESCE(l.description, ''), :query) > 0.05
-               OR (l.title || ' ' || COALESCE(l.description, '')) ILIKE '%' || :query || '%'
+            WHERE llm_status = 'done'
+              AND (similarity(COALESCE(l.title, '') || ' ' || COALESCE(l.description, ''), :query) > 0.05
+               OR (l.title || ' ' || COALESCE(l.description, '')) ILIKE '%' || :query || '%')
             ORDER BY similarity(COALESCE(l.title, '') || ' ' || COALESCE(l.description, ''), :query) DESC
             LIMIT :per_page OFFSET :offset
         """)
@@ -146,8 +148,9 @@ class SearchService:
         count_sql = text("""
             SELECT COUNT(*)
             FROM links
-            WHERE similarity(COALESCE(title, '') || ' ' || COALESCE(description, ''), :query) > 0.05
-               OR (title || ' ' || COALESCE(description, '')) ILIKE '%' || :query || '%'
+            WHERE llm_status = 'done'
+              AND (similarity(COALESCE(title, '') || ' ' || COALESCE(description, ''), :query) > 0.05
+               OR (title || ' ' || COALESCE(description, '')) ILIKE '%' || :query || '%')
         """)
         count_result = await self.db.execute(count_sql, {"query": query})
         total = count_result.scalar_one()
@@ -187,11 +190,12 @@ class SearchService:
                 JOIN tags t ON t.id = lt.tag_id
                 GROUP BY lt.link_id
             ) tags ON l.id = tags.link_id
-            WHERE similarity(COALESCE(l.title, '') || ' ' || COALESCE(l.description, ''), :query) > 0.05
-               OR (l.title || ' ' || COALESCE(l.description, '')) ILIKE '%' || :query || '%'
+            WHERE llm_status = 'done'
+              AND (similarity(COALESCE(l.title, '') || ' ' || COALESCE(l.description, ''), :query) > 0.05
+               OR (l.title || ' ' || COALESCE(l.description, '')) ILIKE '%' || :query || '%')
             ORDER BY
                 (0.6 * GREATEST(similarity(COALESCE(l.title, '') || ' ' || COALESCE(l.description, ''), :query), 0.05)
-                 + 0.4 * (1.0 / (1.0 + COALESCE(l.embedding <=> :embedding_vec, 2.0)))) DESC
+                  + 0.4 * (1.0 / (1.0 + COALESCE(l.embedding <=> :embedding_vec, 2.0)))) DESC
             LIMIT :per_page OFFSET :offset
         """)
 
@@ -279,7 +283,8 @@ class SearchService:
                 JOIN tags t ON t.id = lt.tag_id
                 GROUP BY lt.link_id
             ) tags ON l.id = tags.link_id
-            WHERE l.embedding IS NOT NULL
+            WHERE llm_status = 'done'
+              AND l.embedding IS NOT NULL
             ORDER BY l.embedding <=> :embedding_vec DESC
             LIMIT :per_page OFFSET :offset
         """)

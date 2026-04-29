@@ -40,6 +40,10 @@ class LinkService:
         total_query = select(Link.id)
 
         # Filters
+        # Always filter to only return processed links
+        query = query.where(Link.llm_status == "done")
+        total_query = total_query.where(Link.llm_status == "done")
+
         if filters.get("source_id"):
             query = query.where(Link.source_id == filters["source_id"])
             total_query = total_query.where(Link.source_id == filters["source_id"])

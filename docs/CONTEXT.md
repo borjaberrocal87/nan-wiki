@@ -153,6 +153,9 @@ CREATE INDEX idx_links_domain ON links(domain);
 
 -- Índice vectorial para búsqueda semántica
 CREATE INDEX idx_links_embedding ON links USING ivfflat (embedding vector_cosine_ops);
+
+-- Índice para filtrar solo links procesados
+CREATE INDEX idx_links_llm_status ON links(llm_status);
 ```
 
 ---

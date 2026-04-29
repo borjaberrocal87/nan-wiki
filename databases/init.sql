@@ -110,3 +110,4 @@ CREATE INDEX idx_links_posted_at ON links (posted_at DESC);
 CREATE INDEX idx_links_domain ON links (domain);
 CREATE INDEX idx_link_tags_tag_id ON link_tags (tag_id);
 CREATE INDEX idx_links_embedding_hnsw ON links USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+CREATE INDEX idx_links_llm_status ON links (llm_status);
