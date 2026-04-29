@@ -12,6 +12,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from pglast import parse_sql
 
 from src.config import settings
+from src.services.llm import _get_client
 
 logger = logging.getLogger(__name__)
 
