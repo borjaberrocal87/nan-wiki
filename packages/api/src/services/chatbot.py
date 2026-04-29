@@ -127,26 +127,33 @@ async def chat_complete(
     """
     client = _get_client()
 
+    if stream:
+        logger.info("LLM chat stream request - model: %s, messages: %s", settings.LLM_MODEL, json.dumps([{"role": m["role"], "content": m["content"][:200]} for m in messages], ensure_ascii=False))
+        response_stream = await client.chat.completions.create(
+            model=settings.LLM_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=2048,
+            stream=True,
+        )
+        full_response = []
+        async for chunk in _stream_chunks(response_stream):
+            full_response.append(chunk)
+            yield chunk
+        logger.info("LLM chat stream response (full): %s", "".join(full_response))
+        return
+
     try:
-        if stream:
-            response_stream = await client.chat.completions.create(
-                model=settings.LLM_MODEL,
-                messages=messages,
-                temperature=0.7,
-                max_tokens=2048,
-                stream=True,
-            )
-            return _stream_chunks(response_stream)
-        else:
-            response = await client.chat.completions.create(
-                model=settings.LLM_MODEL,
-                messages=messages,
-                temperature=0.7,
-                max_tokens=2048,
-                stream=False,
-            )
-            content = response.choices[0].message.content
-            return content or ""
+        response = await client.chat.completions.create(
+            model=settings.LLM_MODEL,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=2048,
+            stream=False,
+        )
+        content = response.choices[0].message.content
+        logger.debug("LLM chat response (non-stream): %s", content)
+        yield content or ""
     except APIError as e:
         logger.error("LLM chat API error: %s", e)
         raise ChatbotError(f"Failed to generate response: {e.message}")

@@ -38,7 +38,9 @@ async def chat_message(
         search_svc = SearchService(db)
         context_links = await get_relevant_context(search_svc, question, max_links=10)
         messages = build_prompt(question, context_links)
+        logger.info("Chat request from user %s: %s | context links: %d", user.id, question, len(context_links))
         response_text = await chat_complete(messages, stream=False)
+        logger.info("Chat response for user %s: %s chars", user.id, len(response_text))
         return MessageResponse(message=response_text, references=[link["url"] for link in context_links])
     except ChatbotError as e:
         raise HTTPException(status_code=500, detail=str(e))
