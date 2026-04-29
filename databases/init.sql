@@ -82,7 +82,8 @@ CREATE TABLE links (
     source_detected TEXT
         CONSTRAINT chk__links__source_detected__max_length
             CHECK (length(source_detected) <= 50),
-    embedding vector(1536),
+    embedding vector(4096),
+    retry_count INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     CONSTRAINT pk__links PRIMARY KEY (id),

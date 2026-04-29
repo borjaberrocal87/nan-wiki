@@ -108,9 +108,16 @@ Without these intents, the bot cannot connect (`PrivilegedIntentsRequired`).
 ```env
 DISCORD_TOKEN=                    # Bot token
 DISCORD_GUILD_ID=                 # Server ID of Discord
-OPENAI_API_KEY=                   # OpenAI API key for LLM
+LLM_BASE_URL=                     # LLM provider base URL
+LLM_MODEL=                        # Chat model name
+EMBEDDING_MODEL=                  # Embedding model name
+LLM_API_KEY=                      # LLM provider API key
 JWT_SECRET=                       # Secret for JWT session tokens
-DATABASE_URL=                     # PostgreSQL connection string (e.g., postgresql://user:pass@localhost:5432/db)
+DATABASE_URL=                     # PostgreSQL connection string
+WORKER_CONCURRENCY=               # Number of concurrent workers
+WORKER_POLL_INTERVAL=             # Polling interval in seconds
+MAX_RETRIES=                      # Max retry attempts for failed links
+FRONTEND_URL=                     # Frontend base URL
 ```
 
 ---

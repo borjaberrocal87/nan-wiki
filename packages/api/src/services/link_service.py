@@ -45,6 +45,10 @@ class LinkService:
             query = query.where(Link.author_id == filters["author_id"])
             total_query = total_query.where(Link.author_id == filters["author_id"])
 
+        if filters.get("llm_status"):
+            query = query.where(Link.llm_status == filters["llm_status"])
+            total_query = total_query.where(Link.llm_status == filters["llm_status"])
+
         if filters.get("date_from"):
             query = query.where(Link.posted_at >= filters["date_from"])
             total_query = total_query.where(Link.posted_at >= filters["date_from"])

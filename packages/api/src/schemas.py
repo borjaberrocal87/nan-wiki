@@ -53,6 +53,7 @@ class LinkFilter(BaseModel):
     domain: str | None = None
     channel_id: int | None = None
     author_id: int | None = None
+    llm_status: str | None = None
     date_from: datetime | None = None
     date_to: datetime | None = None
     search_query: str | None = None

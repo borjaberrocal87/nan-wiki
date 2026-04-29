@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Text, VARCHAR, Boolean, ARRAY, Index, ForeignKey, func, desc
+from sqlalchemy import BigInteger, Integer, Text, VARCHAR, Boolean, ARRAY, Index, ForeignKey, func, desc
 from sqlalchemy.dialects.postgresql import UUID
 from pgvector.sqlalchemy import VECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -63,7 +63,8 @@ class Link(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     tags: Mapped[list] = mapped_column(ARRAY(Text), default=[])
     source_detected: Mapped[str | None] = mapped_column(VARCHAR(50), nullable=True)
-    embedding: Mapped[list | None] = mapped_column(VECTOR(1536), nullable=True)
+    embedding: Mapped[list | None] = mapped_column(VECTOR(4096), nullable=True)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(nullable=True)
     updated_at: Mapped[datetime] = mapped_column(nullable=True)
@@ -105,10 +106,3 @@ class ChatMessage(Base):
 Index("idx_links_source_id", Link.source_id)
 Index("idx_links_posted_at", desc(Link.posted_at))
 Index("idx_links_domain", Link.domain)
-Index(
-    "idx_links_embedding",
-    Link.embedding,
-    postgresql_using="ivfflat",
-    postgresql_with={"lists": 100},
-    postgresql_ops={"embedding": "vector_cosine_ops"},
-)

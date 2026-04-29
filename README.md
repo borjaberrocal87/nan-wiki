@@ -102,7 +102,10 @@ See `.env.example` for all variables. Key ones:
 |---|---|
 | `DISCORD_TOKEN` | Bot token from Discord Developer Portal |
 | `DISCORD_GUILD_ID` | Server ID where the bot operates |
-| `OPENAI_API_KEY` | OpenAI API key for LLM processing |
+| `LLM_API_KEY` | LLM provider API key (OpenAI-compatible) |
+| `LLM_BASE_URL` | Custom LLM API base URL |
+| `LLM_MODEL` | Chat model name (default: qwen3.6) |
+| `EMBEDDING_MODEL` | Embedding model name (default: qwen3-embedding) |
 | `DATABASE_URL` | PostgreSQL connection string |
 | `JWT_SECRET` | Secret for JWT session tokens |
 | `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` | OAuth2 credentials |
