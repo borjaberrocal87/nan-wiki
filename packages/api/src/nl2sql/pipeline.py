@@ -476,19 +476,8 @@ async def _retry_stage1(
         result.error = f"LLM error: {e}"
         result.answer = "Sorry, I encountered an error generating a response. Please try again."
     except Exception as e:
-        logger.error("Pipeline error: %s", e, exc_info=True)
-        result.error = f"Unexpected error: {e}"
-        result.answer = "Sorry, something went wrong. Please try again later."
-
-    total_ms = sum(timings.values()) * 1000
-    logger.info(
-        "NL2SQL complete: question=%s sql=%s rows=%s answer_len=%d total_ms=%.0f",
-        question[:80],
-        result.sql is not None,
-        len(result.rows) if result.rows else 0,
-        len(result.answer),
-        total_ms,
-    )
+        result.error = f"Retry execution failed: {e}"
+        result.answer = "I tried again but the query still failed. Please try rephrasing."
 
     return result
 
