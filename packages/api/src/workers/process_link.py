@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -62,7 +63,7 @@ async def process_link(db: AsyncSession, link: Link) -> None:
     if tag_names:
         for tag_name in tag_names:
             stmt = (
-                Tag.__table__.insert()
+                pg_insert(Tag)
                 .values(name=tag_name)
                 .on_conflict_do_nothing()
             )
