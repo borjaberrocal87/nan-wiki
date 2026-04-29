@@ -47,15 +47,15 @@ export default function ChatView() {
             }}
           >
             <span className="material-symbols-outlined" style={{ color: "var(--text-on-primary-container)" }}>
-              smart_toy
+              database
             </span>
           </div>
           <div>
             <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-              Link Assistant
+              NL2SQL Chat
             </h3>
             <p style={{ fontSize: "12px", color: "var(--text-tertiary)", margin: 0 }}>
-              Ask about your shared links
+              Ask about your data — natural language to SQL
             </p>
           </div>
         </div>

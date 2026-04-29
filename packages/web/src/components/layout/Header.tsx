@@ -47,19 +47,31 @@ export default function Header() {
                 style={{
                   fontSize: "13px",
                   padding: "6px 10px",
-                  color: "var(--text-tertiary)",
+                  color: "#a78bfa",
                   textDecoration: "none",
                   borderRadius: "4px",
-                  transition: "color 0.2s",
+                  border: "1px solid rgba(139, 92, 246, 0.4)",
+                  backgroundColor: "rgba(139, 92, 246, 0.08)",
+                  transition: "color 0.2s, background-color 0.2s, border-color 0.2s",
                   display: "flex",
                   alignItems: "center",
                   gap: "4px",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "var(--text-primary)";
+                  e.currentTarget.style.color = "#c4b5fd";
+                  e.currentTarget.style.backgroundColor = "rgba(139, 92, 246, 0.15)";
+                  e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.5)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "var(--text-tertiary)";
+                  e.currentTarget.style.color = "#a78bfa";
+                  e.currentTarget.style.backgroundColor = "rgba(139, 92, 246, 0.08)";
+                  e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.4)";
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.7)";
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.5)";
                 }}
               >
                 <span className="material-symbols-outlined text-sm">smart_toy</span>

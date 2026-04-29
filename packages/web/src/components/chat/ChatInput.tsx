@@ -39,7 +39,7 @@ export default function ChatInput({ onSend, disabled = false }: ChatInputProps) 
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Pregúntame sobre los links compartidos..."
+        placeholder="Ask something about your data..."
         disabled={disabled}
         className="input"
         style={{

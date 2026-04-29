@@ -12,8 +12,14 @@ class Settings(BaseSettings):
 
     LLM_BASE_URL: str
     LLM_MODEL: str
+    LLM_MODEL_NL2SQL: str = ""
+    LLM_MODEL_ROWS2NL: str = ""
     EMBEDDING_MODEL: str
     LLM_API_KEY: str
+
+    STATEMENT_TIMEOUT_MS: int = 8000
+    MAX_ROWS: int = 100
+    NL2SQL_MAX_RETRIES: int = 1
 
     WORKER_CONCURRENCY: int
     WORKER_POLL_INTERVAL: int

@@ -1,121 +1,123 @@
-# Epic: Búsqueda Semántica + Chatbot
+# Epic Update: 005-busqueda-chatbot.md
 
-## Resumen
+## Resumen cambiado
 
-Implementar búsqueda híbrida (keyword + vector) con pgvector y un chatbot conversacional que responde preguntas sobre los links compartidos.
+**Antes:** Búsqueda híbrida (keyword + vector) con pgvector y un chatbot conversacional que responde preguntas sobre los links compartidos.
 
-**Estimación:** ~23h
-**Riesgo:** Medio
-**Dependencias:** Epic 003 (LLM pipeline con embeddings), Epic 002 (API, OAuth)
+**Ahora:** Búsqueda híbrida se mantiene para la página de exploración, pero el chatbot ha sido reemplazado por un pipeline NL2SQL de 4 etapas que responde preguntas en lenguaje natural ejecutando SQL real contra la base de datos.
+
+**Nueva estimación del chat:** ~16-20h (más complejo que la versión anterior — requiere pipeline de 2 LLM calls + validación + ejecución + respuesta en natural language)
 
 ---
 
-## Historias de Usuario
+## Historias de Usuario actualizadas
 
-### HU-5.1 — Búsqueda híbrida (keyword + vector)
+### HU-5.2 — Pipeline NL2SQL de 4 etapas (reemplaza el chatbot anterior)
 
-**Como** usuario, quiero buscar links de forma semántica (no solo por texto exacto) para encontrar contenido relacionado aunque no coincidan las palabras exactas.
+**Como** usuario, quiero hacer preguntas en lenguaje natural sobre los datos de la base de datos y recibir respuestas en lenguaje natural generadas a partir de los datos reales.
 
 **Criterios de aceptación:**
-- [x] Búsqueda híbrida: keyword (pg_trgm) + vector (pgvector cosine similarity)
-- [x] Pesos combinados: 60% keyword + 40% vector (configurable)
-- [x] Endpoint `GET /api/links/search?q=...` para búsqueda híbrida
-- [x] Endpoint `GET /api/links/search?q=...&type=keyword` para búsqueda por texto puro
-- [x] Resultados ordenados por score combinado
-- [x] El campo de búsqueda principal usa búsqueda híbrida por defecto
-- [x] Fallback: si pgvector no está disponible, usar solo keyword search
-- [ ] Performance: respuesta en < 500ms para hasta 10K links
+- [ ] Pipeline `nl2sql/pipeline.py` con función `answer(question: str) -> AnswerResult`
+- [ ] **Etapa 1 — NL → SQL:** Llama a LLM #1 (`LLM_MODEL_NL2SQL`, temp 0), inyecta schema SQL en system prompt, extrae SQL del fenced block
+- [ ] **Etapa 2 — Validar:** Usa `pglast` para parsear el SQL generado, rechaza si no es `SELECT` o `WITH`, rechaza locking clauses (`FOR UPDATE`, `FOR SHARE`), rechaza múltiples statements
+- [ ] **Etapa 3 — Ejecutar:** Ejecuta SQL en transacción `BEGIN READ ONLY` con `statement_timeout`, fetch `MAX_ROWS + 1` para detectar truncamiento, `SELECT COUNT(*)` para row_count
+- [ ] **Etapa 4 — Rows → NL:** Llama a LLM #2 (`LLM_MODEL_ROWS2NL`, temp 0.2) con las filas serializadas a JSON, genera respuesta en lenguaje natural
+- [ ] **Config:** `LLM_MODEL_NL2SQL` (temp 0), `LLM_MODEL_ROWS2NL` (temp 0.2), `STATEMENT_TIMEOUT_MS` (default 8000), `MAX_ROWS` (default 100), `MAX_RETRIES` (default 1)
+- [ ] **Retry:** Si el SQL falla en ejecución, reintenta Stage 1 una vez con el error como contexto
+- [ ] **Seguridad:** `NOTImplementedError` si el SQL referencia `:query_embedding` (placeholder para búsqueda semántica futura)
+- [ ] **Config:** `STATEMENT_TIMEOUT_MS` (default 8000), `MAX_ROWS` (default 100), `MAX_RETRIES` (default 1)
+- [ ] **CLI:** `python -m nl2sql "your question"` con `--debug` para ver SQL, rows y timings
+- [ ] **Testing:** Unit tests para validador SQL, tests para parser de assumptions, integration test stub
 
 **Tareas:**
-- [x] Crear `packages/api/src/services/search.py` con lógica de búsqueda híbrida
-- [x] Implementar búsqueda fuzzy con PostgreSQL `pg_trgm` (reemplaza full-text search, soporta partial matches)
-- [x] Implementar búsqueda vectorial con pgvector (HNSW index, cosine distance)
-- [x] Implementar combinación de scores (weighted average 60/40)
-- [x] Crear endpoint en `packages/api/src/routers/links.py`
-- [x] Configurar pgvector index (HNSW en 1024-dim embeddings)
-- [x] Implementar fallback a keyword-only si pgvector falla
-- [ ] Benchmark con dataset de prueba (mínimo 1000 links)
-- [x] Conectar búsqueda híbrida con SearchBar del frontend (`useLinks.ts`)
+- [ ] Crear `packages/api/src/nl2sql/pipeline.py` con las 4 etapas
+- [ ] Crear `packages/api/src/nl2sql/__main__.py` para CLI
+- [ ] Crear `packages/api/src/nl2sql/validator.py` con `pglast`
+- [ ] Crear `packages/api/src/prompts/rows2nl.system.md` para Stage 4
+- [ ] Mover prompts existentes a `packages/api/src/prompts/`
+- [ ] Añadir `pyproject.toml` o `requirements.txt` con `openai`, `asyncpg`, `pglast`
+- [ ] Tests unitarios: SQL validator, assumptions parser, integration test stub
+- [ ] Integrar pipeline con el router de chat existente
 
-**Estimación:** 10h
+**Estimación:** 16-20h
 
 ---
 
-### HU-5.2 — Chatbot conversacional
+### HU-5.3 — Frontend NL2SQL (reemplaza al chat anterior)
 
-**Como** usuario, quiero hacer preguntas en lenguaje natural sobre los links compartidos y recibir respuestas contextualizadas.
+**Como** usuario, quiero una interfaz de chat para hacer preguntas sobre los datos y recibir respuestas en lenguaje natural con datos reales.
 
 **Criterios de aceptación:**
-- [x] Endpoint `POST /api/chat/message` que recibe `{ message }`
-- [x] Endpoint `POST /api/chat/message/stream` para streaming con SSE
-- [x] El chatbot busca contexto relevante de los links usando búsqueda semántica
-- [x] Construye un prompt con: sistema prompt + contexto de links relevantes + pregunta del usuario
-- [x] Llama a LLM con el prompt construido
-- [x] Respuesta devuelta en streaming (Server-Sent Events) o response completo
-- [x] Respuesta incluye referencias a los links consultados
-- [x] Límite de contexto: máximo 10 links relevantes por pregunta
-- [x] Respuesta en el mismo idioma del usuario (detectado por LLM)
-- [x] Manejo de errores: si el LLM falla, respuesta de error amigable
+- [ ] Ventana de chat con burbujas de mensaje
+- [ ] Mensajes del usuario alineados a la derecha, del bot a la izquierda
+- [ ] Indicador de "escribiendo..." mientras el pipeline procesa
+- [ ] Streaming de respuesta (SSE)
+- [ ] Respuesta del bot muestra el texto natural generado por LLM #2
+- [ ] Con `--debug` o toggle, muestra SQL ejecutado, filas y timings
+- [ ] Input de texto con placeholder: "Ask something about your data..."
+- [ ] Botón de enviar con teclado (Enter)
+- [ ] Scroll automático al último mensaje
+- [ ] Responsive: ocupa toda la pantalla en móvil, panel lateral en desktop
+- [ ] Error state: mensaje de error amigable si falla el pipeline
+- [ ] **Eliminada** la UI de referencias a links
+- [ ] Icono `database` en vez de `smart_toy`
 
 **Tareas:**
-- [x] Crear `packages/api/src/services/chatbot.py` con lógica del chatbot
-- [x] Diseñar system prompt del chatbot (rol, capacidades, limitaciones)
-- [x] Implementar función `build_prompt(question, context_links)`
-- [x] Implementar función `get_relevant_context(question)` usando búsqueda híbrida
-- [x] Crear endpoint `POST /api/chat/message` en `packages/api/src/routers/chat.py`
-- [x] Implementar streaming con SSE (Server-Sent Events)
-- [x] Configurar temperature=0.7 y max_tokens=2048
-- [x] Probar con preguntas de ejemplo y verificar calidad de respuestas
+- [ ] Actualizar `MessageResponse` para incluir campos opcionales: `sql`, `row_count`, `error`
+- [ ] Actualizar `ChatWindow.tsx` para mostrar respuesta en lenguaje natural
+- [ ] Añadir toggle "Show SQL" para debug mode
+- [ ] Actualizar `useChat.ts` para manejar el nuevo formato de respuesta
+- [ ] Actualizar `api.ts` para endpoints de chat actualizados
+- [ ] Actualizar `ChatView.tsx` y `Header.tsx` con nuevo branding (NL2SQL Chat)
+- [ ] Actualizar `ChatInput.tsx` con nuevo placeholder
 
-**Estimación:** 10h
+**Estimación:** 6-8h
 
 ---
 
-### HU-5.4 — Componente de chat en frontend
+### HU-5.1 — Búsqueda híbrida (sin cambios)
 
-**Como** usuario, quiero una interfaz de chat intuitiva para interactuar con el chatbot.
+**Como** usuario, quiero buscar links en la página de exploración usando búsqueda híbrida (keyword + vector).
 
 **Criterios de aceptación:**
-- [x] Ventana de chat con burbujas de mensaje (estilo Discord/chat moderno)
-- [x] Mensajes del usuario alineados a la derecha, del bot a la izquierda
-- [x] Indicador de "escribiendo..." mientras el bot genera respuesta
-- [x] Streaming de respuesta (aparece palabra por palabra)
-- [x] Links referenciados en la respuesta son clicables
-- [x] Input de texto con placeholder: "Pregúntame sobre los links compartidos..."
-- [x] Botón de enviar con teclado (Enter)
-- [x] Scroll automático al último mensaje
-- [x] Responsive: ocupa toda la pantalla en móvil, panel lateral en desktop
-- [x] Error state: mensaje de error amigable si falla la petición
+- [ ] Endpoint `GET /api/links/search?type=hybrid` con búsqueda full-text + pgvector
+- [ ] Fallback a búsqueda solo texto si pgvector no está disponible
+- [ ] Filtros: source, tags, dates, author, channel
+- [ ] Paginación con cursor o offset
+- [ ] Cards con fuente icon, título, descripción, tags, autor, fecha
 
-**Tareas:**
-- [x] Crear `packages/web/src/components/chat/ChatWindow.tsx`
-- [x] Crear `packages/web/src/components/chat/MessageBubble.tsx`
-- [x] Crear `packages/web/src/components/chat/ChatInput.tsx`
-- [x] Implementar streaming con fetch stream (SSE reader)
-- [x] Implementar indicador "escribiendo..."
-- [x] Implementar auto-scroll
-- [x] Parsear y hacer clicables los links en las respuestas
-- [x] Crear hook `useChat.ts` para gestión de estado del chat
-- [x] Integrar chat en la navegación principal (Header link)
-- [x] Probar streaming y responsive
-
-**Estimación:** 5h
+**Estimación:** ~23h (sin cambios)
 
 ---
+
+## Lo que se mantiene del epic original
+
+- **HU-5.1 (Búsqueda híbrida):** Se mantiene intacta para la página de exploración de links
+- **pgvector:** Sigue siendo relevante para la búsqueda de links, no para el chat
+
+## Lo que se elimina del epic original
+
+- Chatbot que devuelve SQL crudo al usuario
+- Búsqueda semántica para el chat (pgvector ya no se usa en el endpoint de chat)
+- Contexto de links relevantes por pregunta
+- UI de referencias a links en los mensajes del chat
+- `get_relevant_context()` y toda la lógica de búsqueda híbrida del chat
 
 ## Dependencias entre historias
 
 ```
-HU-5.1 (Búsqueda híbrida) ──→ HU-5.2 (Chatbot) ──→ HU-5.4 (UI Chat)
-HU-5.2 (Chatbot) ──→ HU-5.4 (UI Chat)
+HU-5.1 (Búsqueda híbrida) ──→ Se mantiene para exploración de links
+HU-5.2 (Pipeline NL2SQL) ──→ HU-5.3 (Frontend NL2SQL)
 ```
 
 ## Aceptación de la Epic
 
-- [x] Búsqueda híbrida funciona: encuentra resultados semánticamente relevantes
-- [ ] Performance < 500ms con dataset de prueba
-- [x] Chatbot responde preguntas sobre links compartidos con contexto relevante
-- [x] Respuestas incluyen referencias a links específicos
-- [x] Interfaz de chat moderna con streaming, burbujas, indicador "escribiendo..."
-- [x] Responsive: móvil y desktop
-- [x] pgvector index funcionando correctamente (HNSW, 1024-dim)
+- [ ] Búsqueda híbrida funciona en exploración de links
+- [ ] Pipeline NL2SQL genera SQL correcto y responde en lenguaje natural
+- [ ] Validación SQL con pglast rechaza INSERT/UPDATE/DELETE/DDL/FOR UPDATE
+- [ ] Ejecución en transacción READ ONLY con statement_timeout
+- [ ] Retry automático ante error de SQL (1 intento)
+- [ ] Frontend muestra respuestas en lenguaje natural con SQL opcional
+- [ ] CLI `python -m nl2sql` funciona localmente con `--debug`
+- [ ] Tests unitarios pasan (SQL validator, assumptions parser)
+- [ ] Responsive: móvil y desktop

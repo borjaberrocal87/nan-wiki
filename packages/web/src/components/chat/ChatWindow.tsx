@@ -4,7 +4,6 @@ interface ChatWindowProps {
   messages: Array<{
     role: 'user' | 'assistant';
     content: string;
-    references?: string[];
     timestamp: Date;
   }>;
   isStreaming: boolean;
@@ -68,14 +67,14 @@ export default function ChatWindow({
             }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--text-tertiary)' }}>
-              smart_toy
+              database
             </span>
           </div>
           <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px', color: 'var(--text-secondary)' }}>
-            Ask about your shared links
+            Ask anything about your data
           </h3>
           <p style={{ fontSize: '14px', lineHeight: '1.5', maxWidth: '360px' }}>
-            Get answers about the links you've shared. I can search through your collection using semantic understanding.
+            Natural language to SQL. Ask questions and get instant queries against your database.
           </p>
           <div
             style={{
@@ -88,9 +87,9 @@ export default function ChatWindow({
             }}
           >
             {[
-              'What links about React have been shared?',
-              'Show me recent GitHub repositories',
-              'What are the best resources on TypeScript?',
+              'Show me the 10 most recent links',
+              'Top 5 users who shared the most links',
+              'Links tagged with "react" or "javascript"',
             ].map((suggestion) => (
               <div
                 key={suggestion}
@@ -135,7 +134,7 @@ export default function ChatWindow({
                 flexShrink: 0,
               }}
             >
-              <span className="material-symbols-outlined text-sm">smart_toy</span>
+              <span className="material-symbols-outlined text-sm">database</span>
             </div>
           )}
 
@@ -151,58 +150,8 @@ export default function ChatWindow({
                 wordBreak: 'break-word',
               }}
             >
-              {msg.role === 'user' ? msg.content : renderContent(msg.content, msg.references)}
+              {msg.role === 'user' ? msg.content : renderSQL(msg.content)}
             </div>
-
-            {msg.references && msg.references.length > 0 && msg.role === 'assistant' && (
-              <div
-                style={{
-                  marginTop: '8px',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '6px',
-                }}
-              >
-                {msg.references.slice(0, 5).map((url, j) => {
-                  const domain = (() => {
-                    try { return new URL(url).hostname.replace('www.', ''); }
-                    catch { return url; }
-                  })();
-                  return (
-                    <a
-                      key={j}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '11px',
-                        color: 'var(--text-tertiary)',
-                        textDecoration: 'none',
-                        backgroundColor: 'var(--bg-surface-container)',
-                        padding: '3px 8px',
-                        borderRadius: '4px',
-                        border: '1px solid var(--border-color)',
-                        maxWidth: '200px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>link</span>
-                      {domain}
-                    </a>
-                  );
-                })}
-                {msg.references.length > 5 && (
-                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
-                    +{msg.references.length - 5} more
-                  </span>
-                )}
-              </div>
-            )}
           </div>
 
           {msg.role === 'user' && (
@@ -245,7 +194,7 @@ export default function ChatWindow({
               flexShrink: 0,
             }}
           >
-            <span className="material-symbols-outlined text-sm">smart_toy</span>
+            <span className="material-symbols-outlined text-sm">database</span>
           </div>
           <div
             style={{
@@ -276,28 +225,61 @@ export default function ChatWindow({
   );
 }
 
-function renderContent(text: string, references?: string[]): React.ReactNode {
-  const urlRegex = /(https?:\/\/[^\s<]+)/g;
-  const parts = text.split(urlRegex);
-  return parts.map((part, i) => {
-    if (urlRegex.test(part)) {
-      return (
-        <a
-          key={i}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            color: 'var(--accent-primary)',
-            textDecoration: 'underline',
-            textDecorationColor: 'var(--border-color)',
-            wordBreak: 'break-all',
-          }}
-        >
-          {part}
-        </a>
+function renderSQL(text: string): React.ReactNode {
+  const sqlBlockRegex = /```sql\n([\s\S]*?)```/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  let partIndex = 0;
+
+  while ((match = sqlBlockRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(
+        <span key={`text-${partIndex++}`}>
+          {text.slice(lastIndex, match.index).split('\n').map((line, i) => (
+            <React.Fragment key={`line-${i}`}>
+              {i > 0 && <br />}
+              {line}
+            </React.Fragment>
+          ))}
+        </span>
       );
     }
-    return <span key={i}>{part}</span>;
-  });
+    parts.push(
+      <pre
+        key={`sql-${partIndex++}`}
+        style={{
+          margin: '8px 0',
+          padding: '12px',
+          backgroundColor: 'var(--bg-surface-container-low)',
+          borderRadius: '8px',
+          fontSize: '13px',
+          lineHeight: '1.4',
+          overflowX: 'auto',
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+          color: 'var(--text-primary)',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}
+      >
+        {match[1]}
+      </pre>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(
+      <span key={`text-${partIndex++}`}>
+        {text.slice(lastIndex).split('\n').map((line, i) => (
+          <React.Fragment key={`line-${i}`}>
+            {i > 0 && <br />}
+            {line}
+          </React.Fragment>
+        ))}
+      </span>
+    );
+  }
+
+  return parts.length > 0 ? parts : text;
 }

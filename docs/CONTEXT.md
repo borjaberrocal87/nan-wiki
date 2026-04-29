@@ -8,7 +8,7 @@
 | **Backend API** | Python + FastAPI | Paralelismo natural con LLMs, tipado fuerte, async, documentación OpenAPI automática |
 | **Frontend** | Next.js 15 (App Router) + TypeScript | SSR para SEO, routing file-based, ecosistema Vercel, TypeScript shared types con backend |
 | **LLM** | OpenAI GPT-4o (o equivalente) | Tool calling fiable para extracción de metadata, bueno generando descripciones concisas |
-| **Base de datos** | PostgreSQL + pgvector | Datos relacionales + embeddings semánticos para búsqueda del chatbot |
+| **Base de datos** | PostgreSQL + pgvector | Datos relacionales + embeddings semánticos para búsqueda en exploración |
 | **Queue** | PostgreSQL (DB polling) | Cola de procesamiento asíncrono con `FOR UPDATE SKIP LOCKED` para evitar contention entre workers |
 | **Auth** | Discord OAuth2 | El usuario ya usa Discord, OAuth es trivial y seguro |
 | **Contenedores** | Docker + docker-compose | Entornos reproducibles, despliegue consistente dev/prod, orquestación local |
@@ -58,7 +58,8 @@
 1. Bot detecta link → guarda registro "pending" en DB
 2. Worker consume links pending de DB con `FOR UPDATE SKIP LOCKED` → llama a LLM (descripción + tags + embedding) → actualiza registro
 3. Frontend hace query → API responde desde PostgreSQL
-4. Chatbot: usuario pregunta → API genera embedding → busca similar con pgvector → construye prompt → LLM responde
+4. Chatbot NL2SQL de 4 etapas: usuario pregunta → LLM #1 genera SQL → pglast valida → SQL se ejecuta READ ONLY → LLM #2 genera respuesta en lenguaje natural
+5. Exploración: usuario busca → API usa búsqueda híbrida (keyword + pgvector) → devuelve links
 
 **Estrategia de contenedización:**
 
@@ -205,12 +206,12 @@ link-library/
 │   │   │   ├── routers/
 │   │   │   │   ├── auth.py         # Discord OAuth flow
 │   │   │   │   ├── links.py        # CRUD + search + filters
-│   │   │   │   ├── chat.py         # Chatbot endpoint
+│   │   │   │   ├── chat.py         # NL2SQL chatbot endpoint
 │   │   │   │   └── admin.py        # Admin endpoints
 │   │   │   ├── services/
 │   │   │   │   ├── llm.py          # OpenAI client (desc + tags + embedding)
 │   │   │   │   ├── search.py       # Búsqueda híbrida (keyword + vector)
-│   │   │   │   ├── chatbot.py      # Chat conversation logic
+│   │   │   │   ├── chatbot.py      # NL2SQL prompt builder + LLM caller
 │   │   │   │   └── oauth.py        # Discord OAuth verification
 │   │   │   ├── workers/
 │   │   │   │   ├── queue.py        # DB polling worker (FOR UPDATE SKIP LOCKED)
@@ -218,7 +219,7 @@ link-library/
 │   │   │   └── dependencies.py     # DB session, auth deps
 │   │   └── tests/
 │   │       ├── test_links.py
-│   │       ├── test_chatbot.py
+│   │       ├── test_chatbot.py     # NL2SQL prompt + LLM integration
 │   │       └── test_oauth.py
 │   │
 │   └── web/                        # Frontend Next.js
@@ -314,12 +315,13 @@ link-library/
 - Tags clicables en la tabla como filtros individuales
 - **Riesgo: medio** — replicar el diseño exacto de nan requiere pulido visual
 
-### Hito 5 — Búsqueda semántica + Chatbot (~23h)
+### Hito 5 — Búsqueda semántica + NL2SQL Chat (~23h)
 
 - Búsqueda híbrida: keyword (PostgreSQL full-text) + vector (pgvector cosine similarity)
-- Endpoint de chat: recibe pregunta → busca contexto relevante → construye prompt → LLM responde
+- NL2SQL Chat: usuario pregunta → API inyecta schema SQL → LLM genera query SQL
 - Componente de chat en frontend (estilo Discord/chat moderno)
-- **Riesgo: medio** — pgvector requiere tuning, la calidad del chatbot depende del prompt engineering
+- Output contract: respuestas en formato fenced SQL block
+- **Riesgo: bajo-medium** — pgvector requiere tuning, la calidad del NL2SQL depende del prompt engineering con schema+ejemplos
 
 ### Hito 6 — Pulido, deploy & monitoring (~15h)
 

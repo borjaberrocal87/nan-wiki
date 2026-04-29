@@ -150,11 +150,10 @@ export interface SearchResponse {
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
-  references?: string[];
   timestamp: Date;
 }
 
-export async function sendChatMessage(message: string): Promise<{ message: string; references: string[] }> {
+export async function sendChatMessage(message: string): Promise<{ message: string }> {
   const response = await fetch(`/api/chat/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -173,7 +172,6 @@ export async function sendChatMessage(message: string): Promise<{ message: strin
 export async function sendChatMessageStream(
   message: string,
   onChunk: (content: string) => void,
-  onReferences?: (urls: string[]) => void,
   onError?: (error: string) => void,
 ): Promise<void> {
   const response = await fetch(`/api/chat/message/stream`, {
@@ -214,8 +212,6 @@ export async function sendChatMessageStream(
           const parsed = JSON.parse(data);
           if (parsed.type === 'chunk') {
             onChunk(parsed.content);
-          } else if (parsed.type === 'references' && onReferences) {
-            onReferences(parsed.urls);
           } else if (parsed.type === 'error' && onError) {
             onError(parsed.message);
           }

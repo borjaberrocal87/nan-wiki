@@ -30,14 +30,13 @@ export function useChat() {
     setError(null);
 
     setMessages((prev) => {
-      const updated = [...prev, { role: 'assistant', content: '', references: [], timestamp: new Date() }];
+      const updated: ChatMessage[] = [...prev, { role: 'assistant', content: '', timestamp: new Date() }];
       messagesRef.current = updated;
       return updated;
     });
 
     try {
       let accumulated = '';
-      let references: string[] = [];
 
       await sendChatMessageStream(
         message,
@@ -53,17 +52,6 @@ export function useChat() {
             return updated;
           });
         },
-        (urls) => {
-          references = urls;
-          setMessages((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              ...updated[updated.length - 1],
-              references: urls,
-            };
-            return updated;
-          });
-        },
         (err) => {
           setError(err);
         },
@@ -74,7 +62,6 @@ export function useChat() {
         updated[updated.length - 1] = {
           role: 'assistant',
           content: accumulated,
-          references,
           timestamp: new Date(),
         };
         return updated;
@@ -87,7 +74,6 @@ export function useChat() {
         updated[updated.length - 1] = {
           role: 'assistant',
           content: `Sorry, I encountered an error: ${errMessage}`,
-          references: [],
           timestamp: new Date(),
         };
         return updated;
