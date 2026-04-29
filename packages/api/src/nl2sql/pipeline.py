@@ -28,6 +28,8 @@ _DEFAULT_NL2SQL_MODEL = "claude-sonnet-4-20250514"
 _DEFAULT_ROWS2NL_MODEL = "claude-haiku-4-5-20251001"
 
 
+
+
 def _get_model(var: str, fallback: str) -> str:
     val = getattr(settings, var, None)
     return val if val else fallback
@@ -84,14 +86,18 @@ async def _call_llm(
     messages: list[ChatCompletionMessageParam],
     temperature: float = 0.0,
     max_tokens: int = 2048,
+    reasoning_effort: str | None = None,
 ) -> str:
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if reasoning_effort is not None:
+        kwargs["reasoning_effort"] = reasoning_effort
     client = _get_client()
-    response = await client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
+    response = await client.chat.completions.create(**kwargs)
     content = response.choices[0].message.content
     if content is None:
         raise ValueError("LLM returned null content")
@@ -172,6 +178,8 @@ async def answer(question: str) -> AnswerResult:
         raw_response = await _call_llm(model1, messages1, temperature=0.0)
         timings["llm1"] = asyncio.get_event_loop().time() - t0
 
+        logger.info("NL2SQL raw response: %s", raw_response[:1000].replace("\n", " "))
+
         sql, assumptions, refused = _extract_sql_and_assumptions(raw_response)
         result.assumptions = assumptions
 
@@ -251,11 +259,13 @@ async def answer(question: str) -> AnswerResult:
             {"role": "user", "content": json.dumps(rows_payload, default=_json_serializer)},
         ]
 
-        answer_text = await _call_llm(model2, messages2, temperature=0.2)
-        timings["llm2"] = asyncio.get_event.loop().time() - t0
+        answer_text = await _call_llm(model2, messages2, temperature=0.2, reasoning_effort="low")
+        timings["llm2"] = asyncio.get_event_loop().time() - t0
+
+        logger.info("Rows2NL final answer: %s", answer_text[:1000].replace("\n", " "))
 
         # Strip HTML tags that the LLM sometimes adds
-        answer_text = re.sub(r"<br\s*/?>", "\n", answer_text)
+        answer_text = answer_text.replace("<br><br>", "").replace("<br>", "")
         result.answer = answer_text.strip()
 
     except (APIError, ValueError) as e:
@@ -305,6 +315,8 @@ async def answer_stream(question: str):
 
         raw_response = await _call_llm(model1, messages1, temperature=0.0)
         timings["llm1"] = asyncio.get_event_loop().time() - t0
+
+        logger.info("NL2SQL raw response: %s", raw_response[:1000].replace("\n", " "))
 
         sql, assumptions, refused = _extract_sql_and_assumptions(raw_response)
         result.assumptions = assumptions
@@ -398,6 +410,7 @@ async def answer_stream(question: str):
             messages=messages2,
             temperature=0.2,
             max_tokens=2048,
+            reasoning_effort="low",
             stream=True,
         )
 
@@ -406,12 +419,14 @@ async def answer_stream(question: str):
             delta = chunk.choices[0].delta
             if delta and delta.content:
                 # Strip HTML tags that the LLM sometimes adds
-                cleaned = re.sub(r"<br\s*/?>", "\n", delta.content)
+                cleaned = delta.content.replace("<br><br>", "").replace("<br>", "")
                 answer_chunks.append(cleaned)
                 yield {"type": "chunk", "content": cleaned}
 
         result.answer = "".join(answer_chunks)
         timings["llm2"] = asyncio.get_event_loop().time() - t0
+
+        logger.info("Rows2NL final answer: %s", result.answer[:1000].replace("\n", " "))
 
     except (APIError, ValueError) as e:
         yield {"type": "error", "message": "Sorry, I encountered an error generating a response. Please try again."}
@@ -442,6 +457,8 @@ async def _retry_stage1(
     t0 = asyncio.get_event_loop().time()
     raw_response = await _call_llm(model1, messages1, temperature=0.0)
     timings["llm1_retry"] = asyncio.get_event_loop().time() - t0
+
+    logger.info("NL2SQL retry raw response: %s", raw_response[:1000].replace("\n", " "))
 
     sql, assumptions, refused = _extract_sql_and_assumptions(raw_response)
     result.assumptions = assumptions
@@ -480,9 +497,10 @@ async def _retry_stage1(
             {"role": "system", "content": _ROWS2NL_SYSTEM},
             {"role": "user", "content": json.dumps(rows_payload, default=_json_serializer)},
         ]
-        answer_text = await _call_llm(model2, messages2, temperature=0.2)
+        answer_text = await _call_llm(model2, messages2, temperature=0.2, reasoning_effort="low")
+        logger.info("Rows2NL retry final answer: %s", answer_text[:1000].replace("\n", " "))
         # Strip HTML tags that the LLM sometimes adds
-        answer_text = re.sub(r"<br\s*/?>", "\n", answer_text)
+        answer_text = answer_text.replace("<br><br>", "").replace("<br>", "")
         result.answer = answer_text.strip()
     except Exception as e:
         result.error = f"Retry execution failed: {e}"
