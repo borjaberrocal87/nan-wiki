@@ -110,7 +110,6 @@ CREATE TABLE links (
     url             TEXT NOT NULL UNIQUE,
     domain          VARCHAR(255) NOT NULL,      -- github.com, x.com, etc.
     source_id       VARCHAR(50) NOT NULL REFERENCES sources(id),
-    raw_content     TEXT,                       -- primer mensaje que contenía el link
     author_id       BIGINT REFERENCES users(id),
     channel_id      BIGINT REFERENCES channels(id),
     discord_message_id BIGINT,
@@ -122,12 +121,30 @@ CREATE TABLE links (
     --   'pending' | 'processing' | 'done' | 'failed'
     title           VARCHAR(500),
     description     TEXT,
-    tags            TEXT[] DEFAULT '{}',
     source_detected VARCHAR(50),
-    embedding       vector(1536),               -- OpenAI ada-002 embedding
+    embedding       vector(4096),               -- embedding vector
+    retry_count     INTEGER DEFAULT 0 NOT NULL,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Tags (entidad separada)
+CREATE TABLE tags (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name        TEXT NOT NULL UNIQUE,
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT chk__tags__name__not_empty CHECK (length(name) > 0)
+);
+
+-- Junction table: link ↔ tag (many-to-many)
+CREATE TABLE link_tags (
+    link_id     UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
+    tag_id      UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT pk__link_tags PRIMARY KEY (link_id, tag_id),
+    CONSTRAINT chk__link_tags__link_neq_tag CHECK (link_id != tag_id)
+);
+CREATE INDEX idx_link_tags_tag_id ON link_tags(tag_id);
 
 -- Interacciones con el chatbot
 CREATE TABLE chat_conversations (
@@ -146,8 +163,7 @@ CREATE TABLE chat_messages (
 );
 
 -- Índices
-CREATE INDEX idx_links_source ON links(source);
-CREATE INDEX idx_links_tags ON links USING GIN(tags);
+CREATE INDEX idx_links_source ON links(source_id);
 CREATE INDEX idx_links_posted_at ON links(posted_at DESC);
 CREATE INDEX idx_links_domain ON links(domain);
 

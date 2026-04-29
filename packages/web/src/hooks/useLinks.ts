@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { fetchLinks, fetchSources, fetchAuthors, fetchChannels, fetchTags, type LinkItem, type PaginatedLinksResponse, type SourceItem } from "../lib/api";
+import { fetchLinks, fetchSources, fetchAuthors, fetchChannels, fetchTags, type LinkItem, type PaginatedLinksResponse, type SourceItem, type TagItem } from "../lib/api";
 import { PER_PAGE } from "../lib/api-url";
 const STORAGE_KEY = "link-library-prefers-infinite-scroll";
 
@@ -19,7 +19,7 @@ interface UseLinksReturn {
   sources: SourceItem[];
   authors: SourceItem[];
   channels: SourceItem[];
-  tags: SourceItem[];
+  tags: TagItem[];
   filters: Record<string, string | string[] | null>;
   searchQuery: string;
   setPage: (p: number) => void;
@@ -37,7 +37,7 @@ function parseUrlFilters(): { filters: Record<string, string | string[] | null>;
     for (const [key, value] of params.entries()) {
       if (key === "page") continue;
 
-      if (key === "source_id" || key === "tags") {
+      if (key === "source_id" || key === "tag_ids") {
         urlFilters[key] = value.split(",").filter(Boolean);
       } else {
         urlFilters[key] = value;
@@ -68,7 +68,7 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
   const [sources, setSources] = useState<SourceItem[]>([]);
   const [authors, setAuthors] = useState<SourceItem[]>([]);
   const [channels, setChannels] = useState<SourceItem[]>([]);
-  const [tags, setTags] = useState<SourceItem[]>([]);
+  const [tags, setTags] = useState<TagItem[]>([]);
   const [filters, setFiltersState] = useState<Record<string, string | string[] | null>>(
     hasUrlParams ? urlFilters : initialFilters,
   );

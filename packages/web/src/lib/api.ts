@@ -16,13 +16,17 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   return response.json();
 }
 
+export interface TagItem {
+  id: string;
+  name: string;
+}
+
 export interface LinkItem {
   id: string;
   url: string;
   domain: string;
   source_id: string;
   source_name: string | null;
-  raw_content: string | null;
   author_id: number | null;
   author_username: string | null;
   channel_id: number | null;
@@ -32,7 +36,7 @@ export interface LinkItem {
   llm_status: string;
   title: string | null;
   description: string | null;
-  tags: string[];
+  tags: TagItem[];
   source_detected: string | null;
   created_at: string;
   updated_at: string;

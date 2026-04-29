@@ -46,8 +46,8 @@ export default function LinkCard({ link }: LinkCardProps) {
       {link.tags && link.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {link.tags.slice(0, 4).map((tag) => (
-            <span key={tag} className="font-mono text-xs text-text-secondary border border-border-outline-variant rounded px-2 py-0.5 bg-secondary">
-              {tag}
+            <span key={tag.id} className="font-mono text-xs text-text-secondary border border-border-outline-variant rounded px-2 py-0.5 bg-secondary">
+              {tag.name}
             </span>
           ))}
           {link.tags.length > 4 && (

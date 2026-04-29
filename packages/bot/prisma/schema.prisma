@@ -45,7 +45,6 @@ model Link {
   domain              String
   sourceId            String    @map("source_id")
   source              Source    @relation(fields: [sourceId], references: [id])
-  rawContent          String?   @map("raw_content") @db.Text
   authorId            BigInt?   @map("author_id")
   author              User?     @relation(fields: [authorId], references: [id])
   channelId           BigInt?   @map("channel_id")
@@ -56,8 +55,8 @@ model Link {
   llmStatus           String    @default("pending") @map("llm_status")
   title               String?
   description         String?   @db.Text
-  tags                String[]  @default([])
   sourceDetected      String?   @map("source_detected")
+  linkTags            LinkTag[]
   // embedding column exists in DB (vector(1536)) but is managed by API via SQLAlchemy, not Prisma
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
@@ -67,6 +66,28 @@ model Link {
   @@index([domain])
 
   @@map("links")
+}
+
+model Tag {
+  id        String    @id @default(uuid()) @map("id") @db.Uuid
+  name      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+  linkTags  LinkTag[]
+
+  @@map("tags")
+}
+
+model LinkTag {
+  linkId  String @map("link_id") @db.Uuid
+  tagId   String @map("tag_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  link    Link   @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([linkId, tagId])
+  @@index([tagId])
+
+  @@map("link_tags")
 }
 
 model ChatConversation {

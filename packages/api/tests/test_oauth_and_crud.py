@@ -135,7 +135,6 @@ class TestLinkService:
             llm_status="done",
             title="Test Repo",
             description="A test repository",
-            tags=["test", "python"],
             created_at=datetime.now(UTC),
             updated_at=datetime_now(UTC),
         )
@@ -145,7 +144,7 @@ class TestLinkService:
         from src.services.link_service import LinkService
 
         result_mock = AsyncMock()
-        result_mock.all.return_value = [(mock_link, None, "GitHub")]
+        result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         service = LinkService(mock_db)
@@ -157,20 +156,19 @@ class TestLinkService:
         assert total == 1
 
     @pytest.mark.asyncio
-    async def test_list_links_filters_by_tags(self, mock_db, mock_link):
+    async def test_list_links_filters_by_tag_ids(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
         result_mock = AsyncMock()
-        result_mock.scalars().all.return_value = [mock_link]
-        result_mock.all.return_value = [mock_link.id]
+        result_mock.all.return_value = [(mock_link, None, "GitHub", [{"id": "tag-uuid-1", "name": "python"}])]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         service = LinkService(mock_db)
-        filters = {"tags": ["test", "python"], "page": 1, "per_page": 20}
+        filters = {"tag_ids": ["tag-uuid-1", "tag-uuid-2"], "page": 1, "per_page": 20}
         links, total = await service.list(filters)
 
         assert len(links) == 1
-        assert "test" in links[0].tags
+        assert links[0]._tags == [{"id": "tag-uuid-1", "name": "python"}]
 
     @pytest.mark.asyncio
     async def test_list_links_pagination(self, mock_db, mock_link):
@@ -316,6 +314,6 @@ class TestLinkFilterSchema:
         with pytest.raises(Exception):
             LinkFilter(per_page=101)
 
-    def test_tags_as_list(self):
-        f = LinkFilter(tags=["python", "web"])
-        assert f.tags == ["python", "web"]
+    def test_tag_ids_as_list(self):
+        f = LinkFilter(tag_ids=["tag-1", "tag-2"])
+        assert f.tag_ids == ["tag-1", "tag-2"]

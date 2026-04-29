@@ -59,13 +59,18 @@ for (const source of KNOWN_SOURCES) {
 // LLM processing status
 export type LlmStatus = 'pending' | 'processing' | 'done' | 'failed';
 
+// Tag entity
+export interface Tag {
+  id: string;
+  name: string;
+}
+
 // Represents a captured link from Discord
 export interface Link {
   id: string;
   url: string;
   domain: string;
   sourceId: SourceId;
-  rawContent?: string;
   authorId: string;
   channelId: string;
   channelName?: string;
@@ -74,7 +79,7 @@ export interface Link {
   llmStatus: LlmStatus;
   title?: string;
   description?: string;
-  tags: string[];
+  tags: Tag[];
   createdAt: string;
   updatedAt: string;
 }
@@ -82,7 +87,7 @@ export interface Link {
 // Filter parameters for link search
 export interface LinkFilters {
   sourceId?: SourceId | SourceId[];
-  tags?: string[];
+  tagIds?: string[];
   domain?: string;
   channelId?: string;
   authorId?: string;

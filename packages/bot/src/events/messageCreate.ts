@@ -162,7 +162,6 @@ async function saveLink(
         url,
         domain,
         sourceId,
-        rawContent: message.content.slice(0, 500),
         authorId: userExists ? BigInt(message.author.id) : undefined,
         channelId: channelExists && message.channelId ? BigInt(message.channelId) : undefined,
         discordMessageId: message.id ? BigInt(message.id) : undefined,
@@ -172,7 +171,6 @@ async function saveLink(
             : undefined,
         postedAt: new Date(message.createdTimestamp),
         llmStatus: 'pending',
-        tags: [],
       },
     });
     return true;

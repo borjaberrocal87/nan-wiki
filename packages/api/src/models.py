@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Integer, Text, VARCHAR, Boolean, ARRAY, Index, ForeignKey, func, desc
+from sqlalchemy import BigInteger, Integer, Text, VARCHAR, Boolean, Index, ForeignKey, func, desc
 from sqlalchemy.dialects.postgresql import UUID
 from pgvector.sqlalchemy import VECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -60,7 +60,6 @@ class Link(Base):
     llm_status: Mapped[str] = mapped_column(VARCHAR(20), default="pending")
     title: Mapped[str | None] = mapped_column(VARCHAR(500), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    tags: Mapped[list] = mapped_column(ARRAY(Text), default=[])
     source_detected: Mapped[str | None] = mapped_column(VARCHAR(50), nullable=True)
     embedding: Mapped[list | None] = mapped_column(VECTOR(4096), nullable=True)
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -71,6 +70,38 @@ class Link(Base):
     author = relationship("User", back_populates="links")
     channel = relationship("Channel", back_populates="links")
     source = relationship("Source", back_populates="links")
+    link_tags = relationship("LinkTag", back_populates="link", cascade="all, delete-orphan")
+
+
+class Tag(Base):
+    __tablename__ = "tags"
+
+    id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    name: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
+
+    link_tags = relationship("LinkTag", back_populates="tag", cascade="all, delete-orphan")
+
+
+class LinkTag(Base):
+    __tablename__ = "link_tags"
+
+    __table_args__ = ()
+
+    link_id: Mapped[str] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("links.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    tag_id: Mapped[str] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tags.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
+
+    link = relationship("Link", back_populates="link_tags")
+    tag = relationship("Tag", back_populates="link_tags")
 
 
 class ChatConversation(Base):
@@ -105,3 +136,4 @@ class ChatMessage(Base):
 Index("idx_links_source_id", Link.source_id)
 Index("idx_links_posted_at", desc(Link.posted_at))
 Index("idx_links_domain", Link.domain)
+Index("idx_link_tags_tag_id", LinkTag.tag_id)

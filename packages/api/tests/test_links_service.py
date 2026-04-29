@@ -26,11 +26,11 @@ class TestLinkToDict:
             llm_status="done",
             title="Test Repo",
             description="A test repository",
-            tags=["test", "python"],
             source_detected="github",
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
+        link._tags = [{"id": "550e8400-e29b-41d4-a716-446655440001", "name": "test"}, {"id": "550e8400-e29b-41d4-a716-446655440002", "name": "python"}]
         result = link_to_dict(link)
 
         assert result["id"] == "550e8400-e29b-41d4-a716-446655440000"
@@ -45,7 +45,7 @@ class TestLinkToDict:
         assert result["llm_status"] == "done"
         assert result["title"] == "Test Repo"
         assert result["description"] == "A test repository"
-        assert result["tags"] == ["test", "python"]
+        assert result["tags"] == [{"id": "550e8400-e29b-41d4-a716-446655440001", "name": "test"}, {"id": "550e8400-e29b-41d4-a716-446655440002", "name": "python"}]
         assert result["source_detected"] == "github"
 
     def test_missing_optional_fields(self):
@@ -64,6 +64,7 @@ class TestLinkToDict:
         assert result["source_name"] is None
         assert result["author_username"] is None
         assert result["tags"] == []
+        assert "_tags" not in dir(link)
 
     def test_source_name_from_join(self):
         link = Link(
@@ -115,7 +116,6 @@ class TestListLinks:
             llm_status="done",
             title="Test Repo",
             description="A test repository",
-            tags=["test", "python"],
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
@@ -125,7 +125,7 @@ class TestListLinks:
         from src.services.link_service import LinkService
 
         result_mock = AsyncMock()
-        result_mock.all.return_value = [(mock_link, None, "GitHub")]
+        result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         filters = LinkFilter(page=1, per_page=20)
@@ -154,7 +154,7 @@ class TestListLinks:
     @pytest.mark.asyncio
     async def test_list_links_with_source_filter(self, mock_db, mock_link):
         result_mock = AsyncMock()
-        result_mock.all.return_value = [(mock_link, None, "GitHub")]
+        result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         filters = LinkFilter(source_id="github", page=1, per_page=20)

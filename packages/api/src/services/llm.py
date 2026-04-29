@@ -47,7 +47,7 @@ Given the URL and source type, produce:
 - A brief description (max 300 characters) that summarizes what the link is about
 - 3-5 relevant tags for categorization
 
-Respond ONLY with valid JSON matching the provided schema. Do not include any text outside the JSON object."""
+Respond ONLY with valid JSON matching the provided schema. Do not include any text outside the JSON object. Always respond in English."""
 
 
 def _get_client() -> AsyncOpenAI:

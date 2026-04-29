@@ -60,6 +60,30 @@ Problems:
 - Missing named constraints
 - `TIMESTAMP` instead of `TIMESTAMPTZ`
 
+## 🔗 M2M relationships
+
+When two entities have a many-to-many relationship, use a junction table with:
+
+- `pk__<table1>_<table2>`: composite primary key `(table1_id, table2_id)`
+- `fk__<table1>_<table2>__<table1_id>`: foreign key to first entity with `ON DELETE CASCADE`
+- `fk__<table1>_<table2>__<table2_id>`: foreign key to second entity with `ON DELETE CASCADE`
+- `created_at`: timestamp for audit trail
+- Index on the second entity's ID for efficient lookups
+
+```sql
+CREATE TABLE link_tags (
+    link_id     UUID NOT NULL
+        CONSTRAINT fk__link_tags__link_id
+            REFERENCES links(id) ON DELETE CASCADE,
+    tag_id      UUID NOT NULL
+        CONSTRAINT fk__link_tags__tag_id
+            REFERENCES tags(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ DEFAULT now() NOT NULL,
+    CONSTRAINT pk__link_tags PRIMARY KEY (link_id, tag_id)
+);
+CREATE INDEX idx_link_tags_tag_id ON link_tags(tag_id);
+```
+
 ## 🧐 Real world examples
 
 - `databases/` — Init scripts with table definitions

@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models import Channel, Link, Source, User
+from src.models import Channel, Link, LinkTag, Source, Tag, User
 
 
 class LinkService:
@@ -13,10 +13,29 @@ class LinkService:
         self.db = db
 
     async def list(self, filters: dict[str, Any]) -> tuple[list[Link], int]:
+        # Subquery to get tag objects (id + name) per link
+        tag_agg_subq = (
+            select(
+                LinkTag.link_id,
+                func.json_agg(
+                    func.json_build_object('id', Tag.id, 'name', Tag.name)
+                ).label("tags")
+            )
+            .join(Tag, Tag.id == LinkTag.tag_id)
+            .group_by(LinkTag.link_id)
+            .subquery()
+        )
+
         query = (
-            select(Link, User.username.label("author_username"), Source.name.label("source_name"))
+            select(
+                Link,
+                User.username.label("author_username"),
+                Source.name.label("source_name"),
+                tag_agg_subq.c.tags.label("tags"),
+            )
             .outerjoin(User, Link.author_id == User.id)
             .join(Source, Link.source_id == Source.id)
+            .outerjoin(tag_agg_subq, Link.id == tag_agg_subq.c.link_id)
         )
         total_query = select(Link.id)
 
@@ -25,13 +44,18 @@ class LinkService:
             query = query.where(Link.source_id == filters["source_id"])
             total_query = total_query.where(Link.source_id == filters["source_id"])
 
-        if filters.get("tags"):
-            tag_list = filters["tags"]
-            if isinstance(tag_list, str):
-                tag_list = [tag_list]
-            if isinstance(tag_list, list) and len(tag_list) > 0:
-                query = query.where(Link.tags.overlap(tag_list))
-                total_query = total_query.where(Link.tags.overlap(tag_list))
+        if filters.get("tag_ids"):
+            tag_ids = filters["tag_ids"]
+            if isinstance(tag_ids, str):
+                tag_ids = [tag_ids]
+            if isinstance(tag_ids, list) and len(tag_ids) > 0:
+                link_ids_with_tags = (
+                    select(LinkTag.link_id)
+                    .where(LinkTag.tag_id.in_(tag_ids))
+                    .subquery()
+                )
+                query = query.where(Link.id.in_(link_ids_with_tags))
+                total_query = total_query.where(Link.id.in_(link_ids_with_tags))
 
         if filters.get("domain"):
             query = query.where(Link.domain == filters["domain"])
@@ -102,6 +126,7 @@ class LinkService:
             link = row[0]
             link.author_username = row[1]
             link.source_name = row[2]
+            link._tags = row[3] or []
             links.append(link)
 
         return list(links), total
@@ -135,11 +160,12 @@ class LinkService:
     async def get_tags(self) -> list[dict[str, Any]]:
         result = await self.db.execute(
             select(
-                func.unnest(Link.tags).label("tag"),
-                func.count(Link.id).label("link_count")
+                Tag.id.label("tag_id"),
+                Tag.name.label("tag_name"),
+                func.count(LinkTag.link_id).label("link_count")
             )
-            .where(Link.tags != [])
-            .group_by("tag")
-            .order_by(func.count(Link.id).desc())
+            .join(LinkTag, Tag.id == LinkTag.tag_id)
+            .group_by(Tag.id, Tag.name)
+            .order_by(func.count(LinkTag.link_id).desc())
         )
-        return [{"tag": row[0], "linkCount": row[1]} for row in result.all()]
+        return [{"id": str(row[0]), "tag": row[1], "linkCount": row[2]} for row in result.all()]

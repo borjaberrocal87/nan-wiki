@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/links", tags=["links"])
 async def list_links_endpoint(
     user: Annotated[AuthUser, Depends(get_current_user_required)],
     source_id: str | None = Query(None),
-    tags: str | None = Query(None, description="Comma-separated tag list"),
+    tag_ids: str | None = Query(None, description="Comma-separated tag ID list"),
     domain: str | None = Query(None),
     channel_id: int | None = Query(None),
     author_id: int | None = Query(None),
@@ -32,7 +32,7 @@ async def list_links_endpoint(
 ) -> LinksListResponse:
     filter_obj = LinkFilter(
         source_id=source_id,
-        tags=tags.split(",") if tags else None,
+        tag_ids=tag_ids.split(",") if tag_ids else None,
         domain=domain,
         channel_id=channel_id,
         author_id=author_id,
@@ -80,7 +80,7 @@ async def list_tags(
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ) -> SourcesResponse:
     result = await get_tags(db)
-    return SourcesResponse(data=[SourceRead(id=t["tag"], name=t["tag"]) for t in result["data"]])
+    return result
 
 
 @router.get("/{link_id}", response_model=LinkDetailResponse)

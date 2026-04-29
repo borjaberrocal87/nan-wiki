@@ -1,14 +1,13 @@
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.models import Link, Source, User
+from src.models import Link, LinkTag, Source, Tag, User
 
 
 class TestModels:
     def test_link_defaults(self):
         link = Link()
         assert link.llm_status == "pending"
-        assert link.tags == []
 
     def test_chat_message_cascade(self):
         conv = MagicMock()
@@ -34,12 +33,19 @@ class TestModels:
             posted_at=datetime.now(UTC),
             title="Test Repo",
             description="A test repository",
-            tags=["test", "python"],
         )
         assert link.llm_status == "pending"
         assert link.title == "Test Repo"
-        assert link.tags == ["test", "python"]
         assert link.source_id == "github"
+
+    def test_tag_model(self):
+        tag = Tag(name="python")
+        assert tag.name == "python"
+
+    def test_link_tag_model(self):
+        link_tag = LinkTag()
+        assert link_tag.link_id is None
+        assert link_tag.tag_id is None
 
 
 class TestDatabase:

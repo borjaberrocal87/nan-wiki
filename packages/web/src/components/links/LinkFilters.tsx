@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { SourceItem } from "../../lib/api";
+import type { SourceItem, TagItem } from "../../lib/api";
 import { SOURCE_CONFIG, type SourceType } from "../../lib/sources";
 
 interface LinkFiltersProps {
   sources: SourceItem[];
   onFilterChange: (filters: Record<string, string | string[] | null>) => void;
-  tags?: SourceItem[];
+  tags?: TagItem[];
   authors?: SourceItem[];
   channels?: SourceItem[];
   activeFilterCount?: number;
@@ -47,11 +47,11 @@ export default function LinkFilters({
   }, [initialFilters.source_id]);
 
   const initTag = useMemo(() => {
-    const val = initialFilters.tags;
+    const val = initialFilters.tag_ids;
     if (Array.isArray(val)) return val[0] || "";
     if (typeof val === "string" && val) return val.split(",")[0];
     return "";
-  }, [initialFilters.tags]);
+  }, [initialFilters.tag_ids]);
 
   const [filterState, setFilterState] = useState<FilterState>({
     selectedSource: initSource,
@@ -65,14 +65,12 @@ export default function LinkFilters({
 
   const sourcesList = sources.map((s) => s.id);
   const allTags = useMemo(() => {
-    const tagMap = new Map<string, number>();
+    const tagMap = new Map<string, string>();
     for (const tag of tags) {
-      tagMap.set(tag.name, (tagMap.get(tag.name) || 0) + 1);
+      tagMap.set(tag.id, tag.name);
     }
     return Array.from(tagMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 50)
-      .map(([tag]) => tag);
+      .slice(0, 50);
   }, [tags]);
 
   const emitFilters = (state: FilterState) => {
@@ -82,7 +80,7 @@ export default function LinkFilters({
       filters.source_id = state.selectedSource;
     }
     if (state.selectedTag) {
-      filters.tags = state.selectedTag;
+      filters.tag_ids = state.selectedTag;
     }
     if (state.selectedAuthorId) {
       filters.author_id = state.selectedAuthorId;
@@ -249,9 +247,9 @@ export default function LinkFilters({
               onChange={(e) => selectTag(e.target.value)}
             >
               <option value="">All Tags</option>
-              {allTags.map((tag) => (
-                <option key={tag} value={tag}>
-                  {tag}
+              {allTags.map(([tagId, tagName]) => (
+                <option key={tagId} value={tagId}>
+                  {tagName}
                 </option>
               ))}
             </select>

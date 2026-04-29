@@ -6,6 +6,16 @@ from typing import Annotated
 from pydantic import BaseModel, Field, FieldValidationInfo, field_validator
 
 
+# ── Tag schemas ───────────────────────────────────────────────────────────────
+
+
+class TagRead(BaseModel):
+    id: str
+    name: str
+
+    model_config = {"from_attributes": True}
+
+
 # ── Source schemas ────────────────────────────────────────────────────────────
 
 
@@ -38,7 +48,7 @@ class LinkRead(BaseModel):
     llm_status: str
     title: str | None = None
     description: str | None = None
-    tags: list[str] = []
+    tags: list[TagRead] = []
     source_detected: str | None = None
     created_at: datetime
     updated_at: datetime
@@ -48,7 +58,7 @@ class LinkRead(BaseModel):
 
 class LinkFilter(BaseModel):
     source_id: str | None = None
-    tags: list[str] | None = None
+    tag_ids: list[str] | None = None
     domain: str | None = None
     channel_id: int | None = None
     author_id: int | None = None

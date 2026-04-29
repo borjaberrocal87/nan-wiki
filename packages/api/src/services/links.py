@@ -6,6 +6,7 @@ from src.schemas import LinkFilter, LinksListResponse, LinkDetailResponse, LinkR
 
 
 def link_to_dict(link) -> dict:
+    tags = getattr(link, "_tags", [])
     return {
         "id": str(link.id),
         "url": link.url,
@@ -21,7 +22,7 @@ def link_to_dict(link) -> dict:
         "llm_status": link.llm_status,
         "title": link.title,
         "description": link.description,
-        "tags": link.tags or [],
+        "tags": tags,
         "source_detected": link.source_detected,
         "created_at": link.created_at,
         "updated_at": link.updated_at,
@@ -70,7 +71,7 @@ async def get_channels(db: AsyncSession) -> dict:
 async def get_tags(db: AsyncSession) -> dict:
     link_service = _get_link_service(db)
     tags = await link_service.get_tags()
-    return {"data": tags}
+    return {"data": [SourceRead(id=t["id"], name=t["tag"]) for t in tags]}
 
 
 def _get_link_service(db: AsyncSession):

@@ -7,7 +7,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
-from src.models import Link
+from src.models import Link, LinkTag, Tag
 from src.services.llm import build_link_text, generate_embedding, generate_link_metadata
 
 logger = logging.getLogger(__name__)
@@ -56,14 +56,36 @@ async def process_link(db: AsyncSession, link: Link) -> None:
         if embedding is None:
             logger.warning("Embedding failed for link %s, continuing without it", link_id)
 
-    # Step 4: Update link with results
+    # Step 4: Upsert tags and create link_tags entries
+    tag_names = metadata.get("tags", [])
+    tag_ids = []
+    if tag_names:
+        for tag_name in tag_names:
+            stmt = (
+                Tag.__table__.insert()
+                .values(name=tag_name)
+                .on_conflict_do_nothing()
+            )
+            await db.execute(stmt)
+
+        result = await db.execute(select(Tag.id, Tag.name).where(Tag.name.in_(tag_names)))
+        rows = result.all()
+        tag_ids = [row[0] for row in rows]
+
+        if tag_ids:
+            link_tags_to_insert = [
+                {"link_id": link.id, "tag_id": tag_id}
+                for tag_id in tag_ids
+            ]
+            await db.execute(LinkTag.__table__.insert(), link_tags_to_insert)
+
+    # Step 5: Update link with results
     await db.execute(
         update(Link)
         .where(Link.id == link.id)
         .values(
             title=metadata.get("title"),
             description=metadata.get("description"),
-            tags=metadata.get("tags", []),
             embedding=embedding,
             llm_status="done",
             updated_at=_now(),
@@ -75,7 +97,7 @@ async def process_link(db: AsyncSession, link: Link) -> None:
         "Link %s processed successfully: title='%s', tags=%s, embedding=%s",
         link_id,
         metadata.get("title"),
-        metadata.get("tags"),
+        tag_ids,
         "yes" if embedding else "no",
     )
 
