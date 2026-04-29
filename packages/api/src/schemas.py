@@ -120,3 +120,10 @@ class StatsResponse(BaseModel):
 class SourceSeed(BaseModel):
     id: str
     name: str
+
+
+class SearchResponse(BaseModel):
+    data: list[LinkRead]
+    total: int
+    page: int
+    per_page: int

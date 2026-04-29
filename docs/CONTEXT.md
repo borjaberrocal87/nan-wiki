@@ -146,22 +146,6 @@ CREATE TABLE link_tags (
 );
 CREATE INDEX idx_link_tags_tag_id ON link_tags(tag_id);
 
--- Interacciones con el chatbot
-CREATE TABLE chat_conversations (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     BIGINT REFERENCES users(id),
-    session_id  UUID NOT NULL,
-    created_at  TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE chat_messages (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    conversation_id UUID REFERENCES chat_conversations(id) ON DELETE CASCADE,
-    role        VARCHAR(10) NOT NULL,           -- 'user' | 'assistant'
-    content     TEXT NOT NULL,
-    created_at  TIMESTAMPTZ DEFAULT NOW()
-);
-
 -- Índices
 CREATE INDEX idx_links_source ON links(source_id);
 CREATE INDEX idx_links_posted_at ON links(posted_at DESC);
@@ -327,13 +311,12 @@ link-library/
 - Tags clicables en la tabla como filtros individuales
 - **Riesgo: medio** — replicar el diseño exacto de nan requiere pulido visual
 
-### Hito 5 — Búsqueda semántica + Chatbot (~30h)
+### Hito 5 — Búsqueda semántica + Chatbot (~23h)
 
 - Búsqueda híbrida: keyword (PostgreSQL full-text) + vector (pgvector cosine similarity)
 - Endpoint de chat: recibe pregunta → busca contexto relevante → construye prompt → LLM responde
 - Componente de chat en frontend (estilo Discord/chat moderno)
-- Historial de conversaciones por usuario
-- **Riesgo: medio-alto** — pgvector requiere tuning, la calidad del chatbot depende del prompt engineering
+- **Riesgo: medio** — pgvector requiere tuning, la calidad del chatbot depende del prompt engineering
 
 ### Hito 6 — Pulido, deploy & monitoring (~15h)
 

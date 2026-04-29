@@ -139,3 +139,29 @@ export async function fetchAuthMe(): Promise<AuthUser> {
 export async function fetchStats(): Promise<StatsResponse> {
   return apiFetch<StatsResponse>('/api/stats');
 }
+
+export interface SearchResponse {
+  data: LinkItem[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+export async function searchLinks(
+  query: string,
+  type: 'hybrid' | 'text' = 'text',
+  embedding?: string,
+  page: number = 1,
+  per_page: number = 20,
+): Promise<SearchResponse> {
+  const params = new URLSearchParams({
+    q: query,
+    type,
+    page: String(page),
+    per_page: String(per_page),
+  });
+  if (embedding) {
+    params.set('embedding', embedding);
+  }
+  return apiFetch<SearchResponse>(`/api/links/search?${params.toString()}`);
+}

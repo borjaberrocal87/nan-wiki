@@ -63,7 +63,7 @@ async def process_link(db: AsyncSession, link: Link) -> None:
     if tag_names:
         for tag_name in tag_names:
             stmt = (
-                pg_insert(Tag)
+                insert(Tag)
                 .values(name=tag_name)
                 .on_conflict_do_nothing()
             )

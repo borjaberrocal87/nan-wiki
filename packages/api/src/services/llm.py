@@ -166,6 +166,11 @@ async def generate_embedding(text: str, max_retries: int = 3) -> list[float] | N
                     continue
             else:
                 embedding = list(embedding_raw)
+            
+            # Truncate to 1024 dimensions to match pgvector index
+            if len(embedding) > 1024:
+                embedding = embedding[:1024]
+            
             return embedding
 
         except APIError as e:

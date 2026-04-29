@@ -26,10 +26,7 @@ describe('messageCreate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-
-    // Reset rate limit state
-    const { messageTimestamps } = await import('../events/messageCreate.js');
-    // The map is internal, so we just clear mocks and let the module reload
+    // The rate limit map is internal to messageCreate, cleared on module reload
   });
 
   afterEach(() => {

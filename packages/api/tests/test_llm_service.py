@@ -192,7 +192,7 @@ class TestGenerateEmbedding:
     @pytest.mark.asyncio
     async def test_returns_embedding_vector(self):
         mock_data = MagicMock()
-        mock_data.embedding = [0.1] * 1536
+        mock_data.embedding = [0.1] * 1024
         mock_response = MagicMock()
         mock_response.data = [mock_data]
 
@@ -203,7 +203,7 @@ class TestGenerateEmbedding:
             result = await generate_embedding("test text")
 
         assert result is not None
-        assert len(result) == 1536
+        assert len(result) == 1024
         assert result[0] == 0.1
 
     @pytest.mark.asyncio

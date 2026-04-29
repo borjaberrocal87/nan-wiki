@@ -20,7 +20,7 @@ async function syncChannels() {
     let synced = 0;
 
     for (const [, channel] of channels) {
-      if (!channel.isTextBased() || channel.isThreadOnly()) continue;
+      if (!channel || !channel.isTextBased() || channel.isThreadOnly()) continue;
 
       const category = channel.parent?.name ?? null;
       await prisma.channel.upsert({

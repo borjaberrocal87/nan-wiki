@@ -6,8 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.dependencies import AuthUser, get_current_user_required, get_db
-from src.schemas import LinkDetailResponse, LinkFilter, LinksListResponse, SourceRead, SourcesResponse
+from src.schemas import LinkDetailResponse, LinkFilter, LinkRead, LinksListResponse, SearchResponse, SourceRead, SourcesResponse
 from src.services.links import get_authors, get_channels, get_link, get_sources, get_tags, list_links
+from src.services.search import SearchService
+from src.services.llm import generate_embedding
 
 router = APIRouter(prefix="/api/links", tags=["links"])
 
@@ -83,6 +85,42 @@ async def list_tags(
     return result
 
 
+@router.get("/search", response_model=SearchResponse)
+async def search_links(
+    user: Annotated[AuthUser, Depends(get_current_user_required)],
+    q: str = Query(..., description="Search query"),
+    type: str = Query(default="hybrid", pattern="^(hybrid|text)$"),
+    embedding: str | None = Query(None, description="Comma-separated embedding values (required for hybrid)"),
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=20, ge=1, le=100),
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> SearchResponse:
+    search_svc = SearchService(db)
+
+    if type == "hybrid":
+        if not embedding:
+            emb = await generate_embedding(q)
+            if emb is None:
+                raise HTTPException(status_code=500, detail="Failed to generate embedding")
+            links, total = await search_svc.hybrid_search(q, embedding=emb, page=page, per_page=per_page)
+        else:
+            try:
+                emb = [float(x) for x in embedding.split(",")]
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="embedding must be comma-separated float values",
+                )
+            links, total = await search_svc.hybrid_search(q, embedding=emb, page=page, per_page=per_page)
+    else:
+        links, total = await search_svc.keyword_search(q, page=page, per_page=per_page)
+
+    return SearchResponse(
+        data=[LinkRead(**link) for link in links],
+        total=total,
+        page=page,
+        per_page=per_page,
+    )
 @router.get("/{link_id}", response_model=LinkDetailResponse)
 async def get_link_endpoint(
     user: Annotated[AuthUser, Depends(get_current_user_required)],

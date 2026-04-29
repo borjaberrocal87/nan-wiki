@@ -46,7 +46,7 @@ class TestProcessLink:
 
         with (
             patch("src.workers.process_link.generate_link_metadata", return_value=metadata),
-            patch("src.workers.process_link.generate_embedding", return_value=[0.1] * 1536),
+            patch("src.workers.process_link.generate_embedding", return_value=[0.1] * 1024),
         ):
             await process_link(mock_db, mock_link)
 

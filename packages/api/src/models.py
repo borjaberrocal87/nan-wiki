@@ -28,7 +28,6 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
     links = relationship("Link", back_populates="author")
-    conversations = relationship("ChatConversation", back_populates="user")
 
 
 class Channel(Base):
@@ -61,7 +60,7 @@ class Link(Base):
     title: Mapped[str | None] = mapped_column(VARCHAR(500), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_detected: Mapped[str | None] = mapped_column(VARCHAR(50), nullable=True)
-    embedding: Mapped[list | None] = mapped_column(VECTOR(4096), nullable=True)
+    embedding: Mapped[list | None] = mapped_column(VECTOR(1024), nullable=True)
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(nullable=True)
@@ -102,34 +101,6 @@ class LinkTag(Base):
 
     link = relationship("Link", back_populates="link_tags")
     tag = relationship("Tag", back_populates="link_tags")
-
-
-class ChatConversation(Base):
-    __tablename__ = "chat_conversations"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    user_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.id"), nullable=True)
-    session_id: Mapped[str] = mapped_column(UUID(as_uuid=True), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(nullable=True)
-
-    user = relationship("User", back_populates="conversations")
-    messages = relationship("ChatMessage", back_populates="conversation", cascade="all, delete-orphan")
-
-
-class ChatMessage(Base):
-    __tablename__ = "chat_messages"
-
-    id: Mapped[str] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    conversation_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("chat_conversations.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    role: Mapped[str] = mapped_column(VARCHAR(10), nullable=False)
-    content: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(nullable=True)
-
-    conversation = relationship("ChatConversation", back_populates="messages")
 
 
 # Índices

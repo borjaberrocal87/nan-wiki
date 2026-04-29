@@ -2,11 +2,11 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-COPY pnpm-workspace.yaml package.json ./
+COPY pnpm-workspace.yaml package.json .npmrc ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/bot/package.json packages/bot/
 
-RUN corepack enable && pnpm install
+RUN corepack enable && pnpm install --shamefully-hoist
 
 COPY packages/shared/ packages/shared/
 COPY packages/bot/ packages/bot/
@@ -20,9 +20,8 @@ FROM node:22-alpine AS runtime
 
 WORKDIR /app
 
-COPY --from=builder /app/packages/bot/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/bot/package.json ./
+COPY --from=builder /app/packages/bot/dist ./dist
 
 ENV NODE_ENV=production
 

@@ -188,8 +188,15 @@ async function saveLink(
 }
 
 export async function handleMessageCreate(message: Message): Promise<void> {
-  if (message.author.bot) return;
-  if (!message.guildId) return;
+  console.log(`[LINK] Message received from ${message.author.tag} (${message.author.id}) in ${message.guildId || 'DM'}: "${message.content.substring(0, 50)}"`);
+  if (message.author.bot) {
+    console.log(`[LINK] Ignoring bot message from ${message.author.tag}`);
+    return;
+  }
+  if (!message.guildId) {
+    console.log(`[LINK] Ignoring DM from ${message.author.tag}`);
+    return;
+  }
 
   const detected = detectUrls(message.content);
   if (detected.length === 0) return;

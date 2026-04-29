@@ -4,8 +4,8 @@
 
 Implementar búsqueda híbrida (keyword + vector) con pgvector y un chatbot conversacional que responde preguntas sobre los links compartidos.
 
-**Estimación:** ~30h
-**Riesgo:** Medio-Alto
+**Estimación:** ~23h
+**Riesgo:** Medio
 **Dependencias:** Epic 003 (LLM pipeline con embeddings), Epic 002 (API, OAuth)
 
 ---
@@ -46,7 +46,7 @@ Implementar búsqueda híbrida (keyword + vector) con pgvector y un chatbot conv
 **Como** usuario, quiero hacer preguntas en lenguaje natural sobre los links compartidos y recibir respuestas contextualizadas.
 
 **Criterios de aceptación:**
-- [ ] Endpoint `POST /api/chat` que recibe `{ message, conversation_id? }`
+- [ ] Endpoint `POST /api/chat` que recibe `{ message }`
 - [ ] El chatbot busca contexto relevante de los links usando búsqueda semántica
 - [ ] Construye un prompt con: sistema prompt + contexto de links relevantes + pregunta del usuario
 - [ ] Llama a LLM con el prompt construido
@@ -67,37 +67,6 @@ Implementar búsqueda híbrida (keyword + vector) con pgvector y un chatbot conv
 - [ ] Probar con preguntas de ejemplo y verificar calidad de respuestas
 
 **Estimación:** 10h
-
----
-
-### HU-5.3 — Historial de conversaciones
-
-**Como** usuario, quiero que mis conversaciones con el chatbot se guarden para poder seguir el hilo y volver a consultarlas.
-
-**Criterios de aceptación:**
-- [ ] Cada conversación tiene un `session_id` (UUID) generado automáticamente
-- [ ] Mensajes guardados en tabla `chat_messages` con role (user/assistant), content, created_at
-- [ ] Endpoint `GET /api/chat/conversations` lista conversaciones del usuario
-- [ ] Endpoint `GET /api/chat/conversations/{id}` devuelve historial de una conversación
-- [ ] Endpoint `DELETE /api/chat/conversations/{id}` borra una conversación
-- [ ] Conversaciones ordenadas por `created_at DESC`
-- [ ] Máximo 50 conversaciones por usuario (auto-limpieza de las más antiguas)
-- [ ] UI: sidebar con lista de conversaciones (colapsable en móvil)
-- [ ] Nueva conversación se crea automáticamente al iniciar chat
-
-**Tareas:**
-- [ ] Tablas `chat_conversations` y `chat_messages` ya creadas (Epic 001)
-- [ ] Crear `packages/api/src/routers/chat.py` con endpoints de gestión
-- [ ] Implementar CRUD de conversaciones en `chatbot.py`
-- [ ] Implementar auto-limpieza (max 50 por usuario)
-- [ ] Crear componente de historial en `packages/web/src/components/chat/`
-- [ ] Sidebar con lista de conversaciones
-- [ ] Crear nueva conversación con botón "+"
-- [ ] Borrar conversación con confirmación
-- [ ] Conectar con API desde frontend
-- [ ] Probar flujo completo: crear → chatear → ver historial → borrar
-
-**Estimación:** 7h
 
 ---
 
@@ -138,7 +107,6 @@ Implementar búsqueda híbrida (keyword + vector) con pgvector y un chatbot conv
 ```
 HU-5.1 (Búsqueda híbrida) ──→ HU-5.2 (Chatbot) ──→ HU-5.4 (UI Chat)
 HU-5.2 (Chatbot) ──→ HU-5.4 (UI Chat)
-HU-5.3 (Historial) ──→ HU-5.4 (UI Chat)
 ```
 
 ## Aceptación de la Epic
@@ -147,8 +115,7 @@ HU-5.3 (Historial) ──→ HU-5.4 (UI Chat)
 - [ ] Performance < 500ms con dataset de prueba
 - [ ] Chatbot responde preguntas sobre links compartidos con contexto relevante
 - [ ] Respuestas incluyen referencias a links específicos
-- [ ] Historial de conversaciones guardado y recuperable
-- [ ] Máximo 50 conversaciones por usuario (auto-limpieza)
+
 - [ ] Interfaz de chat moderna con streaming, burbujas, indicador "escribiendo..."
 - [ ] Responsive: móvil y desktop
 - [ ] pgvector index funcionando correctamente

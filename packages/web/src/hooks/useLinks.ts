@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { fetchLinks, fetchSources, fetchAuthors, fetchChannels, fetchTags, type LinkItem, type PaginatedLinksResponse, type SourceItem, type TagItem } from "../lib/api";
+import { fetchLinks, fetchSources, fetchAuthors, fetchChannels, fetchTags, searchLinks, type LinkItem, type PaginatedLinksResponse, type SourceItem, type TagItem } from "../lib/api";
 import { PER_PAGE } from "../lib/api-url";
 
 
@@ -128,6 +128,36 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
       if (!append) {
         setLoading(true);
         setError(null);
+      }
+
+      const searchQ = filters.search_query as string | null;
+
+      if (searchQ && searchQ.trim()) {
+        try {
+          const res = await searchLinks(searchQ.trim(), "hybrid", undefined, pageNum, PER_PAGE);
+
+          if (append) {
+            setLinks((prev) => [...prev, ...res.data]);
+          } else {
+            setLinks(res.data);
+          }
+
+          setTotal(res.total);
+          setHasMore(res.data.length > 0 && res.page * res.per_page < res.total);
+        } catch (err) {
+          console.error("Failed to search links:", err);
+          if (!append) {
+            setError("Failed to search links. Make sure the API is running.");
+          }
+          if (!append) {
+            setLinks([]);
+          }
+        } finally {
+          if (!append) {
+            setLoading(false);
+          }
+        }
+        return;
       }
 
       const params: Record<string, string | number> = {
