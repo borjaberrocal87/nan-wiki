@@ -46,25 +46,26 @@ Implementar búsqueda híbrida (keyword + vector) con pgvector y un chatbot conv
 **Como** usuario, quiero hacer preguntas en lenguaje natural sobre los links compartidos y recibir respuestas contextualizadas.
 
 **Criterios de aceptación:**
-- [ ] Endpoint `POST /api/chat` que recibe `{ message }`
-- [ ] El chatbot busca contexto relevante de los links usando búsqueda semántica
-- [ ] Construye un prompt con: sistema prompt + contexto de links relevantes + pregunta del usuario
-- [ ] Llama a LLM con el prompt construido
-- [ ] Respuesta devuelta en streaming (Server-Sent Events) o response completo
-- [ ] Respuesta incluye referencias a los links consultados (mínimo 3)
-- [ ] Límite de contexto: máximo 10 links relevantes por pregunta
-- [ ] Respuesta en español por defecto (detectar idioma del user)
-- [ ] Manejo de errores: si el LLM falla, respuesta de error amigable
+- [x] Endpoint `POST /api/chat/message` que recibe `{ message }`
+- [x] Endpoint `POST /api/chat/message/stream` para streaming con SSE
+- [x] El chatbot busca contexto relevante de los links usando búsqueda semántica
+- [x] Construye un prompt con: sistema prompt + contexto de links relevantes + pregunta del usuario
+- [x] Llama a LLM con el prompt construido
+- [x] Respuesta devuelta en streaming (Server-Sent Events) o response completo
+- [x] Respuesta incluye referencias a los links consultados
+- [x] Límite de contexto: máximo 10 links relevantes por pregunta
+- [x] Respuesta en el mismo idioma del usuario (detectado por LLM)
+- [x] Manejo de errores: si el LLM falla, respuesta de error amigable
 
 **Tareas:**
-- [ ] Crear `packages/api/src/services/chatbot.py` con lógica del chatbot
-- [ ] Diseñar system prompt del chatbot (rol, capacidades, limitaciones)
-- [ ] Implementar función `build_prompt(question, context_links)`
-- [ ] Implementar función `get_relevant_context(question)` usando búsqueda híbrida
-- [ ] Crear endpoint `POST /api/chat` en `packages/api/src/routers/chat.py`
-- [ ] Implementar streaming con SSE (Server-Sent Events)
-- [ ] Configurar temperature y max_tokens apropiados
-- [ ] Probar con preguntas de ejemplo y verificar calidad de respuestas
+- [x] Crear `packages/api/src/services/chatbot.py` con lógica del chatbot
+- [x] Diseñar system prompt del chatbot (rol, capacidades, limitaciones)
+- [x] Implementar función `build_prompt(question, context_links)`
+- [x] Implementar función `get_relevant_context(question)` usando búsqueda híbrida
+- [x] Crear endpoint `POST /api/chat/message` en `packages/api/src/routers/chat.py`
+- [x] Implementar streaming con SSE (Server-Sent Events)
+- [x] Configurar temperature=0.7 y max_tokens=2048
+- [x] Probar con preguntas de ejemplo y verificar calidad de respuestas
 
 **Estimación:** 10h
 
@@ -75,28 +76,28 @@ Implementar búsqueda híbrida (keyword + vector) con pgvector y un chatbot conv
 **Como** usuario, quiero una interfaz de chat intuitiva para interactuar con el chatbot.
 
 **Criterios de aceptación:**
-- [ ] Ventana de chat con burbujas de mensaje (estilo Discord/chat moderno)
-- [ ] Mensajes del usuario alineados a la derecha, del bot a la izquierda
-- [ ] Indicador de "escribiendo..." mientras el bot genera respuesta
-- [ ] Streaming de respuesta (aparece palabra por palabra)
-- [ ] Links referenciados en la respuesta son clicables
-- [ ] Input de texto con placeholder: "Pregúntame sobre los links compartidos..."
-- [ ] Botón de enviar con teclado (Enter)
-- [ ] Scroll automático al último mensaje
-- [ ] Responsive: ocupa toda la pantalla en móvil, panel lateral en desktop
-- [ ] Error state: mensaje de error amigable si falla la petición
+- [x] Ventana de chat con burbujas de mensaje (estilo Discord/chat moderno)
+- [x] Mensajes del usuario alineados a la derecha, del bot a la izquierda
+- [x] Indicador de "escribiendo..." mientras el bot genera respuesta
+- [x] Streaming de respuesta (aparece palabra por palabra)
+- [x] Links referenciados en la respuesta son clicables
+- [x] Input de texto con placeholder: "Pregúntame sobre los links compartidos..."
+- [x] Botón de enviar con teclado (Enter)
+- [x] Scroll automático al último mensaje
+- [x] Responsive: ocupa toda la pantalla en móvil, panel lateral en desktop
+- [x] Error state: mensaje de error amigable si falla la petición
 
 **Tareas:**
-- [ ] Crear `packages/web/src/components/chat/ChatWindow.tsx`
-- [ ] Crear `packages/web/src/components/chat/MessageBubble.tsx`
-- [ ] Crear `packages/web/src/components/chat/ChatInput.tsx`
-- [ ] Implementar streaming con EventSource / fetch stream
-- [ ] Implementar indicador "escribiendo..."
-- [ ] Implementar auto-scroll
-- [ ] Parsear y hacer clicables los links en las respuestas
-- [ ] Crear hook `useChat.ts` para gestión de estado del chat
-- [ ] Integrar chat en la navegación principal
-- [ ] Probar streaming y responsive
+- [x] Crear `packages/web/src/components/chat/ChatWindow.tsx`
+- [x] Crear `packages/web/src/components/chat/MessageBubble.tsx`
+- [x] Crear `packages/web/src/components/chat/ChatInput.tsx`
+- [x] Implementar streaming con fetch stream (SSE reader)
+- [x] Implementar indicador "escribiendo..."
+- [x] Implementar auto-scroll
+- [x] Parsear y hacer clicables los links en las respuestas
+- [x] Crear hook `useChat.ts` para gestión de estado del chat
+- [x] Integrar chat en la navegación principal (Header link)
+- [x] Probar streaming y responsive
 
 **Estimación:** 5h
 
@@ -113,9 +114,8 @@ HU-5.2 (Chatbot) ──→ HU-5.4 (UI Chat)
 
 - [x] Búsqueda híbrida funciona: encuentra resultados semánticamente relevantes
 - [ ] Performance < 500ms con dataset de prueba
-- [ ] Chatbot responde preguntas sobre links compartidos con contexto relevante
-- [ ] Respuestas incluyen referencias a links específicos
-
-- [ ] Interfaz de chat moderna con streaming, burbujas, indicador "escribiendo..."
-- [ ] Responsive: móvil y desktop
+- [x] Chatbot responde preguntas sobre links compartidos con contexto relevante
+- [x] Respuestas incluyen referencias a links específicos
+- [x] Interfaz de chat moderna con streaming, burbujas, indicador "escribiendo..."
+- [x] Responsive: móvil y desktop
 - [x] pgvector index funcionando correctamente (HNSW, 1024-dim)

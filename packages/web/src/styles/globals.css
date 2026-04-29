@@ -285,6 +285,12 @@
     animation: skeleton-pulse 1.5s ease-in-out infinite;
   }
 
+  /* Typing cursor for streaming */
+  @keyframes typing {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
   /* Section divider */
   .section-divider {
     border: none;

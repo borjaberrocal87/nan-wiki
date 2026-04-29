@@ -41,6 +41,30 @@ export default function Header() {
         <nav style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           {!checking && user ? (
             <>
+              <Link
+                href="/chat"
+                className="font-mono"
+                style={{
+                  fontSize: "13px",
+                  padding: "6px 10px",
+                  color: "var(--text-tertiary)",
+                  textDecoration: "none",
+                  borderRadius: "4px",
+                  transition: "color 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--text-tertiary)";
+                }}
+              >
+                <span className="material-symbols-outlined text-sm">smart_toy</span>
+                Chat
+              </Link>
               <span className="header-welcome font-mono">
                 Welcome, {user.username}
               </span>

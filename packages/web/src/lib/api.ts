@@ -147,6 +147,88 @@ export interface SearchResponse {
   per_page: number;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  references?: string[];
+  timestamp: Date;
+}
+
+export async function sendChatMessage(message: string): Promise<{ message: string; references: string[] }> {
+  const response = await fetch(`/api/chat/message`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ message }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function sendChatMessageStream(
+  message: string,
+  onChunk: (content: string) => void,
+  onReferences?: (urls: string[]) => void,
+  onError?: (error: string) => void,
+): Promise<void> {
+  const response = await fetch(`/api/chat/message/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ message }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
+    throw new Error(error.detail || `API error: ${response.status}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('No response body');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') return;
+
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.type === 'chunk') {
+            onChunk(parsed.content);
+          } else if (parsed.type === 'references' && onReferences) {
+            onReferences(parsed.urls);
+          } else if (parsed.type === 'error' && onError) {
+            onError(parsed.message);
+          }
+        } catch {
+          // skip malformed JSON
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 export async function searchLinks(
   query: string,
   type: 'hybrid' | 'text' = 'text',

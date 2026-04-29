@@ -126,3 +126,20 @@ class SearchResponse(BaseModel):
     total: int
     page: int
     per_page: int
+
+
+# ── Chat schemas ──────────────────────────────────────────────────────────────
+
+
+class MessageRequest(BaseModel):
+    message: str
+
+    @field_validator("message", mode="before")
+    @classmethod
+    def strip_message(cls, v: str) -> str:
+        return v.strip() if v else ""
+
+
+class MessageResponse(BaseModel):
+    message: str
+    references: list[str] = []
