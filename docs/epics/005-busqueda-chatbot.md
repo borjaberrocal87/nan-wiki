@@ -17,25 +17,25 @@ Implementar búsqueda híbrida (keyword + vector) con pgvector y un chatbot conv
 **Como** usuario, quiero buscar links de forma semántica (no solo por texto exacto) para encontrar contenido relacionado aunque no coincidan las palabras exactas.
 
 **Criterios de aceptación:**
-- [ ] Búsqueda híbrida: keyword (PostgreSQL full-text search) + vector (pgvector cosine similarity)
-- [ ] pesos combinados: 60% keyword + 40% vector (configurable)
-- [ ] Endpoint `GET /api/links/search?q=...&type=hybrid` para búsqueda híbrida
-- [ ] Endpoint `GET /api/links/search?q=...&type=text` para búsqueda por texto puro
-- [ ] Resultados ordenados por score combinado
-- [ ] El campo de búsqueda principal usa búsqueda híbrida por defecto
-- [ ] Fallback: si pgvector no está disponible, usar solo keyword search
+- [x] Búsqueda híbrida: keyword (pg_trgm) + vector (pgvector cosine similarity)
+- [x] Pesos combinados: 60% keyword + 40% vector (configurable)
+- [x] Endpoint `GET /api/links/search?q=...` para búsqueda híbrida
+- [x] Endpoint `GET /api/links/search?q=...&type=keyword` para búsqueda por texto puro
+- [x] Resultados ordenados por score combinado
+- [x] El campo de búsqueda principal usa búsqueda híbrida por defecto
+- [x] Fallback: si pgvector no está disponible, usar solo keyword search
 - [ ] Performance: respuesta en < 500ms para hasta 10K links
 
 **Tareas:**
-- [ ] Crear `packages/api/src/services/search.py` con lógica de búsqueda híbrida
-- [ ] Implementar full-text search con PostgreSQL `tsvector/tsquery`
-- [ ] Implementar búsqueda vectorial con pgvector (`<=>` operator, cosine distance)
-- [ ] Implementar combinación de scores (weighted average)
-- [ ] Crear endpoint en `packages/api/src/routers/links.py`
-- [ ] Configurar pgvector index (ivfflat con 100 lists)
-- [ ] Implementar fallback a keyword-only si pgvector falla
+- [x] Crear `packages/api/src/services/search.py` con lógica de búsqueda híbrida
+- [x] Implementar búsqueda fuzzy con PostgreSQL `pg_trgm` (reemplaza full-text search, soporta partial matches)
+- [x] Implementar búsqueda vectorial con pgvector (HNSW index, cosine distance)
+- [x] Implementar combinación de scores (weighted average 60/40)
+- [x] Crear endpoint en `packages/api/src/routers/links.py`
+- [x] Configurar pgvector index (HNSW en 1024-dim embeddings)
+- [x] Implementar fallback a keyword-only si pgvector falla
 - [ ] Benchmark con dataset de prueba (mínimo 1000 links)
-- [ ] Conectar búsqueda híbrida con SearchBar del frontend
+- [x] Conectar búsqueda híbrida con SearchBar del frontend (`useLinks.ts`)
 
 **Estimación:** 10h
 
@@ -111,11 +111,11 @@ HU-5.2 (Chatbot) ──→ HU-5.4 (UI Chat)
 
 ## Aceptación de la Epic
 
-- [ ] Búsqueda híbrida funciona: encuentra resultados semánticamente relevantes
+- [x] Búsqueda híbrida funciona: encuentra resultados semánticamente relevantes
 - [ ] Performance < 500ms con dataset de prueba
 - [ ] Chatbot responde preguntas sobre links compartidos con contexto relevante
 - [ ] Respuestas incluyen referencias a links específicos
 
 - [ ] Interfaz de chat moderna con streaming, burbujas, indicador "escribiendo..."
 - [ ] Responsive: móvil y desktop
-- [ ] pgvector index funcionando correctamente
+- [x] pgvector index funcionando correctamente (HNSW, 1024-dim)
