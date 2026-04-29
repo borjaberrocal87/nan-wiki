@@ -259,7 +259,7 @@ async def answer(question: str) -> AnswerResult:
             {"role": "user", "content": json.dumps(rows_payload, default=_json_serializer)},
         ]
 
-        answer_text = await _call_llm(model2, messages2, temperature=0.2, reasoning_effort="low")
+        answer_text = await _call_llm(model2, messages2, temperature=0.2, max_tokens=256)
         timings["llm2"] = asyncio.get_event_loop().time() - t0
 
         logger.info("Rows2NL final answer: %s", answer_text[:1000].replace("\n", " "))
@@ -409,8 +409,7 @@ async def answer_stream(question: str):
             model=model2,
             messages=messages2,
             temperature=0.2,
-            max_tokens=2048,
-            reasoning_effort="low",
+            max_tokens=256,
             stream=True,
         )
 
@@ -497,14 +496,32 @@ async def _retry_stage1(
             {"role": "system", "content": _ROWS2NL_SYSTEM},
             {"role": "user", "content": json.dumps(rows_payload, default=_json_serializer)},
         ]
-        answer_text = await _call_llm(model2, messages2, temperature=0.2, reasoning_effort="low")
-        logger.info("Rows2NL retry final answer: %s", answer_text[:1000].replace("\n", " "))
+        answer_text = await _call_llm(model2, messages2, temperature=0.2, max_tokens=256)
+        timings["llm2"] = asyncio.get_event_loop().time() - t0
+
+        logger.info("Rows2NL final answer: %s", answer_text[:1000].replace("\n", " "))
+
         # Strip HTML tags that the LLM sometimes adds
         answer_text = answer_text.replace("<br><br>", "").replace("<br>", "")
         result.answer = answer_text.strip()
+
+    except (APIError, ValueError) as e:
+        result.error = f"LLM error: {e}"
+        result.answer = "Sorry, I encountered an error generating a response. Please try again."
     except Exception as e:
-        result.error = f"Retry execution failed: {e}"
-        result.answer = "I tried again but the query still failed. Please try rephrasing."
+        logger.error("Pipeline error: %s", e, exc_info=True)
+        result.error = f"Unexpected error: {e}"
+        result.answer = "Sorry, something went wrong. Please try again later."
+
+    total_ms = sum(timings.values()) * 1000
+    logger.info(
+        "NL2SQL complete: question=%s sql=%s rows=%s answer_len=%d total_ms=%.0f",
+        question[:80],
+        result.sql is not None,
+        len(result.rows) if result.rows else 0,
+        len(result.answer),
+        total_ms,
+    )
 
     return result
 

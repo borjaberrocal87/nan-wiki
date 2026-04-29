@@ -20,3 +20,6 @@ the query results, and any assumptions made, provide a clear and concise natural
 
 # Output
 Return ONLY the answer text. No preamble, no SQL, no formatting.
+Do NOT output any thinking, reasoning, or internal monologue.
+Do NOT include phrases like "Thinking Process:", "Draft:", "Self-Correction:", or "Final Answer:".
+Your entire response must be the answer itself.
