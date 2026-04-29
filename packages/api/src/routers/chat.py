@@ -64,7 +64,6 @@ async def chat_message_stream(
         search_svc = SearchService(db)
         context_links = await get_relevant_context(search_svc, question, max_links=10)
         messages = build_prompt(question, context_links)
-        response_gen = chat_complete(messages, stream=True)
 
         async def event_generator():
             # Send references as initial event
@@ -72,7 +71,7 @@ async def chat_message_stream(
             yield f"data: {json.dumps({'type': 'references', 'urls': references})}\n\n"
 
             try:
-                async for chunk in response_gen:
+                async for chunk in chat_complete(messages, stream=True):
                     yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
             except Exception as e:
                 logger.error("Streaming error: %s", e)

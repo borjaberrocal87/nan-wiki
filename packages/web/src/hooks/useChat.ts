@@ -8,6 +8,7 @@ export function useChat() {
   const [streamingContent, setStreamingContent] = useState('');
   const [error, setError] = useState<string | null>(null);
   const streamingRef = useRef(false);
+  const messagesRef = useRef<ChatMessage[]>([]);
 
   const sendMessage = useCallback(async (message: string) => {
     if (streamingRef.current) return;
@@ -19,16 +20,20 @@ export function useChat() {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => {
+      const updated = [...prev, userMessage];
+      messagesRef.current = updated;
+      return updated;
+    });
     setIsStreaming(true);
     setStreamingContent('');
     setError(null);
 
-    const assistantIndex = messages.length;
-    setMessages((prev) => [
-      ...prev,
-      { role: 'assistant', content: '', references: [], timestamp: new Date() },
-    ]);
+    setMessages((prev) => {
+      const updated = [...prev, { role: 'assistant', content: '', references: [], timestamp: new Date() }];
+      messagesRef.current = updated;
+      return updated;
+    });
 
     try {
       let accumulated = '';
@@ -75,13 +80,13 @@ export function useChat() {
         return updated;
       });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to send message';
-      setError(message);
+      const errMessage = err instanceof Error ? err.message : 'Failed to send message';
+      setError(errMessage);
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = {
           role: 'assistant',
-          content: `Sorry, I encountered an error: ${message}`,
+          content: `Sorry, I encountered an error: ${errMessage}`,
           references: [],
           timestamp: new Date(),
         };
@@ -92,7 +97,7 @@ export function useChat() {
       setStreamingContent('');
       streamingRef.current = false;
     }
-  }, [messages]);
+  }, []);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
