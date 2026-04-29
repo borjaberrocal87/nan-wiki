@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { LinkItem } from "../../lib/api";
-import { SOURCE_CONFIG, type SourceType } from "../../lib/sources";
+import { SOURCE_CONFIG, getRelativeDate, type SourceType } from "../../lib/sources";
 
 interface LinkTableProps {
   links: LinkItem[];
@@ -46,7 +46,7 @@ export default function LinkTable({ links, onTagFilter, activeTagFilter }: LinkT
                 Tags
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest whitespace-nowrap">
-                Posted At
+                Age
               </th>
             </tr>
           </thead>
@@ -57,9 +57,7 @@ export default function LinkTable({ links, onTagFilter, activeTagFilter }: LinkT
               const authorName = link.author_username || (link.author_id ? `User ${link.author_id}` : null);
               const title = link.title || "\u2014";
               const description = link.description || "";
-              const postedAt = link.posted_at
-                ? new Date(link.posted_at).toISOString().replace("T", " ").slice(0, 16)
-                : "\u2014";
+              const postedAt = link.posted_at ? getRelativeDate(link.posted_at) : "\u2014";
 
               return (
                 <tr
@@ -143,31 +141,74 @@ export default function LinkTable({ links, onTagFilter, activeTagFilter }: LinkT
 
                   {/* Tags column */}
                   <td className="p-4">
-                    {link.tags && link.tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {link.tags.slice(0, 3).map((tag) => {
-                          const isActive = activeTagFilter === tag.id;
-                          return (
-                            <button
-                              key={tag.id}
-                              onClick={() => onTagFilter?.(tag.id)}
-                              className={`font-mono text-xs rounded px-2 py-0.5 transition-colors cursor-pointer ${
-                                isActive
-                                  ? "text-violet-400 border-violet-500 bg-violet-500/10"
-                                  : "text-slate-400 border-slate-700 bg-slate-800/50 hover:text-violet-400 hover:border-violet-500 hover:bg-violet-500/10"
-                              } border`}
-                            >
-                              {tag.name}
-                            </button>
-                          );
-                        })}
-                        {link.tags.length > 3 && (
-                          <span className="font-mono text-xs text-text-tertiary">
-                            +{link.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
+                    {link.tags && link.tags.length > 0 ? (() => {
+                      const [expanded, setExpanded] = useState(false);
+                      const [hovered, setHovered] = useState(false);
+                      const ref = useRef<HTMLDivElement>(null);
+
+                      return (
+                        <div
+                          ref={ref}
+                          className="flex flex-wrap gap-1 relative"
+                          onMouseEnter={() => setHovered(true)}
+                          onMouseLeave={() => setHovered(false)}
+                        >
+                          {(expanded ? link.tags : link.tags.slice(0, 3)).map((tag) => {
+                            const isActive = activeTagFilter === tag.id;
+                            return (
+                              <button
+                                key={tag.id}
+                                onClick={() => onTagFilter?.(tag.id)}
+                                className={`font-mono text-xs rounded px-2 py-0.5 transition-colors cursor-pointer ${
+                                  isActive
+                                    ? "text-violet-400 border-violet-500 bg-violet-500/10"
+                                    : "text-slate-400 border-slate-700 bg-slate-800/50 hover:text-violet-400 hover:border-violet-500 hover:bg-violet-500/10"
+                                } border`}
+                              >
+                                {tag.name}
+                              </button>
+                            );
+                          })}
+                          {link.tags.length > 3 && !expanded && (
+                            <>
+                              <button
+                                onClick={() => setExpanded(true)}
+                                className="font-mono text-xs text-slate-300 hover:text-violet-400 cursor-pointer transition-colors"
+                              >
+                                +{link.tags.length - 3}
+                              </button>
+                              {hovered && (
+                                <div
+                                  className="pointer-events-none absolute z-50 flex flex-wrap gap-1 rounded-lg border border-slate-700 bg-surface-container-low px-3 py-2 text-sm shadow-xl"
+                                  style={{
+                                    top: ref.current ? ref.current.getBoundingClientRect().bottom + 4 : "100%",
+                                    left: 0,
+                                    maxWidth: "320px",
+                                  }}
+                                >
+                                  {link.tags.map((tag) => {
+                                    const isActive = activeTagFilter === tag.id;
+                                    return (
+                                      <button
+                                        key={tag.id}
+                                        onClick={() => onTagFilter?.(tag.id)}
+                                        className={`font-mono text-xs rounded px-2 py-0.5 transition-colors cursor-pointer ${
+                                          isActive
+                                            ? "text-violet-400 border-violet-500 bg-violet-500/10"
+                                            : "text-slate-400 border-slate-700 bg-slate-800/50 hover:text-violet-400 hover:border-violet-500 hover:bg-violet-500/10"
+                                        } border`}
+                                      >
+                                        {tag.name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })() : (
                       <span className="text-text-tertiary italic text-sm">\u2014</span>
                     )}
                   </td>

@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchLinks, fetchSources, fetchAuthors, fetchChannels, fetchTags, type LinkItem, type PaginatedLinksResponse, type SourceItem, type TagItem } from "../lib/api";
 import { PER_PAGE } from "../lib/api-url";
-const STORAGE_KEY = "link-library-prefers-infinite-scroll";
+
 
 interface UseLinksOptions {
   initialFilters?: Record<string, string | string[] | null>;
+  viewMode?: "grid" | "table";
 }
 
 interface UseLinksReturn {
@@ -54,7 +55,7 @@ function parseUrlFilters(): { filters: Record<string, string | string[] | null>;
 }
 
 export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
-  const { initialFilters = {} } = options;
+  const { initialFilters = {}, viewMode = "table" } = options;
   const { filters: urlFilters, page: urlPage } = parseUrlFilters();
 
   const hasUrlParams = Object.keys(urlFilters).length > 0;
@@ -77,13 +78,7 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
   );
 
   const isInitialMount = useRef(true);
-  const [prefersInfiniteScroll] = useState(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
+  const isLoadMore = useRef(false);
 
   // Fetch sources, authors, channels, tags on mount
   useEffect(() => {
@@ -203,43 +198,26 @@ export function useLinks(options: UseLinksOptions = {}): UseLinksReturn {
   }, []);
 
   const loadMore = useCallback(() => {
+    isLoadMore.current = true;
     const nextPage = page + 1;
     setPage(nextPage);
-    fetchData(nextPage, true);
-  }, [page, fetchData]);
+  }, [page]);
 
   // Main data fetch effect
   useEffect(() => {
-    fetchData(page, false);
+    if (isLoadMore.current) {
+      isLoadMore.current = false;
+      fetchData(page, true);
+    } else {
+      fetchData(page, false);
+    }
   }, [page, filters, fetchData]);
 
-  // Infinite scroll observer
+  // Scroll to top on page change (table view only)
   useEffect(() => {
-    if (prefersInfiniteScroll && hasMore && !loading) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0]?.isIntersecting) {
-            const nextPage = page + 1;
-            setPage(nextPage);
-            fetchData(nextPage, true);
-          }
-        },
-        { rootMargin: "200px" },
-      );
-
-      const el = document.getElementById("infinite-scroll-trigger");
-      if (el) observer.observe(el);
-
-      return () => observer.disconnect();
-    }
-  }, [prefersInfiniteScroll, hasMore, loading, page, fetchData]);
-
-  // Scroll to top on page change
-  useEffect(() => {
-    if (!prefersInfiniteScroll) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [page, prefersInfiniteScroll]);
+    if (viewMode !== "table") return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [page, viewMode]);
 
   return {
     links,

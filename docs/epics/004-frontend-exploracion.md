@@ -234,16 +234,16 @@ El frontend usa un dark theme con paleta violeta inspirada en Material Design 3.
 
 ---
 
-### HU-4.4 — Paginación / Infinite scroll
+### HU-4.4 — Paginación / Load more
 
 **Como** usuario, quiero navegar entre páginas de links para explorar todo el contenido sin sobrecarga, con la paginación estilo nan.builders.
 
 **Criterios de aceptación:**
-- [x] Paginación numérica (1, 2, 3, ...) con "prev/next" (labels cortos, no "anterior/siguiente")
-- [x] Infinite scroll como alternativa (localStorage preference `link-library-prefers-infinite-scroll`, IntersectionObserver)
+- [x] Paginación numérica (1, 2, 3, ...) con "prev/next" (labels cortos, no "anterior/siguiente") — vista tabla
+- [x] "Load more" botón explícito — vista grid (appende cards, no reemplaza)
 - [x] 20 links por página (configurable en `PER_PAGE`)
 - [x] Loader visible al cargar página siguiente
-- [x] Scroll to top al cambiar de página (solo paginación numérica)
+- [x] Scroll to top al cambiar de página (solo paginación numérica, vista tabla)
 - [x] Estado final: "No more results"
 - [x] La paginación funciona con filtros activos
 - [x] URL actualizada con query params (sin `page` en filters)
@@ -252,9 +252,8 @@ El frontend usa un dark theme con paleta violeta inspirada en Material Design 3.
 
 **Tareas:**
 - [x] Crear componente de paginación en `packages/web/src/components/links/Pagination.tsx`
-- [x] Implementar paginación numérica con estilo dark theme
-- [x] Implementar infinite scroll como alternativa (IntersectionObserver con `rootMargin: 200px`)
-- [x] Toggle entre paginación e infinite scroll (localStorage preference, sin toggle visible)
+- [x] Implementar paginación numérica con estilo dark theme (vista tabla)
+- [x] Implementar "Load more" botón explícito con append de cards (vista grid)
 - [x] Conectar con API: `GET /api/links?page=N&per_page=20`
 - [x] Backend: implementar paginación con offset/limit
 - [x] Probar paginación con filtros activos
@@ -273,12 +272,16 @@ HU-4.1 (Cards) ──→ HU-4.2 (Search) ──→ HU-4.3 (Filters) ──→ HU
 ## Aceptación de la Epic
 
 - [x] Grid de cards con dark theme Material 3 (fondo `var(--bg-surface-container-lowest)`, borde 1px `var(--border-color)`, hover con glow violeta)
-- [x] Vista de tabla con columnas: ID, Source, Author, Channel, Tags, Posted At
+- [x] Vista de tabla con columnas: ID, Source, Author, Channel, Tags, Age
+- [x] Vista grid con toggle de vista (grid/tabla) con botones oscuros
 - [x] Cards muestran toda la info: fuente, título, descripción, tags, autor, fecha, canal
+- [x] Fecha relativa ("2d ago", "3h ago") en cards y tabla
 - [x] Búsqueda en tiempo real por título, descripción, tags, URL
 - [x] Filtros por fuente, tags, fechas, canal, autor — combinables y persistentes en URL
-- [x] Tags clicables en la tabla como filtros individuales (single-select)
-- [x] Paginación numérica + infinite scroll (localStorage preference)
+- [x] Tags clicables en la tabla y cards como filtros individuales (single-select)
+- [x] Tags en cards expandibles (mostrar +N, click para ver todos)
+- [x] Tags en tabla con popup al hover mostrando todos los tags
+- [x] Paginación numérica (vista tabla) + "Load more" explícito (vista grid)
 - [x] Responsive: móvil, tablet, desktop
 - [x] Skeleton loading + empty state
 - [x] Transiciones discretas (150-250ms)

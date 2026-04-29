@@ -15,6 +15,7 @@ import { fetchAuthMe, fetchStats, type AuthUser, type StatsResponse } from "../.
 type ViewMode = "grid" | "table";
 
 export default function LinkGrid() {
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
   const {
     links,
     loading,
@@ -32,9 +33,7 @@ export default function LinkGrid() {
     setSearchQuery,
     setFilters,
     loadMore,
-  } = useLinks();
-
-  const [viewMode, setViewMode] = useState<ViewMode>("table");
+  } = useLinks({ viewMode });
   const [user, setUser] = useState<AuthUser | null>(null);
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const totalPages = Math.ceil(total / PER_PAGE);
@@ -64,14 +63,14 @@ export default function LinkGrid() {
 
       <div className="flex items-center justify-between mb-4 gap-3">
         <div
-          className="flex items-center gap-1 bg-surface-container border border-border-color rounded p-[3px]"
+          className="flex items-center gap-1 bg-slate-800 border border-slate-700 rounded p-[3px]"
         >
           <button
             onClick={() => setViewMode("grid")}
             className={`flex items-center justify-center w-8 h-7 border-none rounded transition-all duration-150 p-0 ${
               viewMode === "grid"
                 ? "bg-accent-primary-container text-on-primary-container"
-                : "bg-transparent text-text-tertiary"
+                : "bg-slate-700/50 text-slate-400 hover:text-slate-300"
             }`}
             title="Grid view"
           >
@@ -87,7 +86,7 @@ export default function LinkGrid() {
             className={`flex items-center justify-center w-8 h-7 border-none rounded transition-all duration-150 p-0 ${
               viewMode === "table"
                 ? "bg-accent-primary-container text-on-primary-container"
-                : "bg-transparent text-text-tertiary"
+                : "bg-slate-700/50 text-slate-400 hover:text-slate-300"
             }`}
             title="Table view"
           >
@@ -95,7 +94,6 @@ export default function LinkGrid() {
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="18" x2="21" y2="18" />
-              <line x1="3" y1="6" x2="3" y2="18" />
               <line x1="9" y1="6" x2="9" y2="18" />
               <line x1="15" y1="6" x2="15" y2="18" />
             </svg>
@@ -124,7 +122,7 @@ export default function LinkGrid() {
                     <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">Channel</th>
                     <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">Tags</th>
                     <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">Message</th>
-                    <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest whitespace-nowrap">Posted At</th>
+                    <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest whitespace-nowrap">Age</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/30">
@@ -149,7 +147,12 @@ export default function LinkGrid() {
           {viewMode === "grid" ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
               {links.map((link) => (
-                <LinkCard key={link.id} link={link} />
+                <LinkCard
+                  key={link.id}
+                  link={link}
+                  onTagFilter={(tagId) => setFilters({ tag_ids: tagId })}
+                  activeTagFilter={(filters.tag_ids as string | null) || null}
+                />
               ))}
             </div>
           ) : (
@@ -160,16 +163,40 @@ export default function LinkGrid() {
             />
           )}
 
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={total}
-            perPage={PER_PAGE}
-            onPageChange={(p) => {
-              setPage(p);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          />
+          {viewMode === "grid" ? (
+            hasMore && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={loadMore}
+                  disabled={loading}
+                  className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-violet-400 border border-slate-700 hover:border-violet-500 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Loading...
+                    </>
+                  ) : (
+                    "Load more"
+                  )}
+                </button>
+              </div>
+            )
+          ) : (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              perPage={PER_PAGE}
+              onPageChange={(p) => {
+                setPage(p);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          )}
 
           {!loading && (
             <MetricsCards
