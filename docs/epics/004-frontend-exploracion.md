@@ -273,9 +273,11 @@ HU-4.1 (Cards) ──→ HU-4.2 (Search) ──→ HU-4.3 (Filters) ──→ HU
 ## Aceptación de la Epic
 
 - [x] Grid de cards con dark theme Material 3 (fondo `var(--bg-surface-container-lowest)`, borde 1px `var(--border-color)`, hover con glow violeta)
+- [x] Vista de tabla con columnas: ID, Source, Author, Channel, Tags, Posted At
 - [x] Cards muestran toda la info: fuente, título, descripción, tags, autor, fecha, canal
 - [x] Búsqueda en tiempo real por título, descripción, tags, URL
 - [x] Filtros por fuente, tags, fechas, canal, autor — combinables y persistentes en URL
+- [x] Tags clicables en la tabla como filtros individuales (single-select)
 - [x] Paginación numérica + infinite scroll (localStorage preference)
 - [x] Responsive: móvil, tablet, desktop
 - [x] Skeleton loading + empty state

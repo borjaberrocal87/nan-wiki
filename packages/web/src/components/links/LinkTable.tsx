@@ -6,6 +6,8 @@ import { SOURCE_CONFIG, type SourceType } from "../../lib/sources";
 
 interface LinkTableProps {
   links: LinkItem[];
+  onTagFilter?: (tagId: string) => void;
+  activeTagFilter?: string | null;
 }
 
 function generateId(linkId: string): string {
@@ -16,16 +18,7 @@ function generateId(linkId: string): string {
   return `#WK-${num}`;
 }
 
-function extractDomain(url: string): string {
-  try {
-    const hostname = new URL(url).hostname.replace(/^www\./, "");
-    return hostname;
-  } catch {
-    return url;
-  }
-}
-
-export default function LinkTable({ links }: LinkTableProps) {
+export default function LinkTable({ links, onTagFilter, activeTagFilter }: LinkTableProps) {
   const [tooltip, setTooltip] = useState<{ message: string; x: number; y: number } | null>(null);
 
   return (
@@ -41,9 +34,6 @@ export default function LinkTable({ links }: LinkTableProps) {
                 Message
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
-                Domain
-              </th>
-              <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
                 Source
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
@@ -51,6 +41,9 @@ export default function LinkTable({ links }: LinkTableProps) {
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
                 Channel
+              </th>
+              <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">
+                Tags
               </th>
               <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest whitespace-nowrap">
                 Posted At
@@ -61,10 +54,9 @@ export default function LinkTable({ links }: LinkTableProps) {
             {links.map((link, index) => {
               const sourceKey = (link.source_id || "other").toLowerCase() as SourceType;
               const sourceConfig = SOURCE_CONFIG[sourceKey] || SOURCE_CONFIG.other;
-              const domain = extractDomain(link.url);
               const authorName = link.author_username || (link.author_id ? `User ${link.author_id}` : null);
-              const authorInitial = authorName ? authorName.charAt(0).toUpperCase() : "?";
-              const message = link.description || "\u2014";
+              const title = link.title || "\u2014";
+              const description = link.description || "";
               const postedAt = link.posted_at
                 ? new Date(link.posted_at).toISOString().replace("T", " ").slice(0, 16)
                 : "\u2014";
@@ -94,10 +86,10 @@ export default function LinkTable({ links }: LinkTableProps) {
                   {/* Message column */}
                   <td className="p-4 max-w-xs">
                     <p
-                      className="text-sm text-slate-400 truncate"
+                      className="text-sm text-slate-300 truncate"
                       onMouseEnter={(e) => {
-                        if (message.length > 30) {
-                          setTooltip({ message, x: e.clientX, y: e.clientY });
+                        if (description) {
+                          setTooltip({ message: description, x: e.clientX, y: e.clientY });
                         }
                       }}
                       onMouseMove={(e) => {
@@ -107,13 +99,8 @@ export default function LinkTable({ links }: LinkTableProps) {
                       }}
                       onMouseLeave={() => setTooltip(null)}
                     >
-                      {message}
+                      {title}
                     </p>
-                  </td>
-
-                  {/* Domain column */}
-                  <td className="p-4 text-sm text-slate-400 font-medium">
-                    {domain}
                   </td>
 
                   {/* Source column */}
@@ -138,7 +125,7 @@ export default function LinkTable({ links }: LinkTableProps) {
                     {authorName ? (
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-xs font-semibold text-text-secondary flex-shrink-0">
-                          {authorInitial}
+                          {authorName.charAt(0).toUpperCase()}
                         </div>
                         <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                           {authorName}
@@ -152,6 +139,37 @@ export default function LinkTable({ links }: LinkTableProps) {
                   {/* Channel column */}
                   <td className="p-4 text-sm text-slate-500">
                     {link.channel_name ? `#${link.channel_name}` : "\u2014"}
+                  </td>
+
+                  {/* Tags column */}
+                  <td className="p-4">
+                    {link.tags && link.tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {link.tags.slice(0, 3).map((tag) => {
+                          const isActive = activeTagFilter === tag.id;
+                          return (
+                            <button
+                              key={tag.id}
+                              onClick={() => onTagFilter?.(tag.id)}
+                              className={`font-mono text-xs rounded px-2 py-0.5 transition-colors cursor-pointer ${
+                                isActive
+                                  ? "text-violet-400 border-violet-500 bg-violet-500/10"
+                                  : "text-slate-400 border-slate-700 bg-slate-800/50 hover:text-violet-400 hover:border-violet-500 hover:bg-violet-500/10"
+                              } border`}
+                            >
+                              {tag.name}
+                            </button>
+                          );
+                        })}
+                        {link.tags.length > 3 && (
+                          <span className="font-mono text-xs text-text-tertiary">
+                            +{link.tags.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-text-tertiary italic text-sm">\u2014</span>
+                    )}
                   </td>
 
                   {/* Posted At column */}

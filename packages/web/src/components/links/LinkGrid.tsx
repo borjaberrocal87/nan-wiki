@@ -122,6 +122,7 @@ export default function LinkGrid() {
                     <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">Source</th>
                     <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">Author</th>
                     <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">Channel</th>
+                    <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">Tags</th>
                     <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest">Message</th>
                     <th className="p-4 font-label-md text-slate-400 uppercase text-[10px] tracking-widest whitespace-nowrap">Posted At</th>
                   </tr>
@@ -152,7 +153,11 @@ export default function LinkGrid() {
               ))}
             </div>
           ) : (
-            <LinkTable links={links} />
+            <LinkTable
+              links={links}
+              onTagFilter={(tagId) => setFilters({ tag_ids: tagId })}
+              activeTagFilter={(filters.tag_ids as string | null) || null}
+            />
           )}
 
           <Pagination

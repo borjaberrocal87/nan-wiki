@@ -320,9 +320,11 @@ link-library/
 ### Hito 4 — Frontend de exploración (~30h)
 
 - Página principal con grid de cards (look nan.builders: oscuro, minimal, tipografía limpia)
+- Vista de tabla con columnas: ID, URL, Domain, Source, Author, Channel, Tags, Posted At
 - Barra de búsqueda con filtros: fuente, tags, rango de fechas, canal
 - Paginación / infinite scroll
 - Cards con: fuente icon, título, descripción, tags, autor, fecha
+- Tags clicables en la tabla como filtros individuales
 - **Riesgo: medio** — replicar el diseño exacto de nan requiere pulido visual
 
 ### Hito 5 — Búsqueda semántica + Chatbot (~30h)
