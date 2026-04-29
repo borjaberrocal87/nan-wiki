@@ -79,7 +79,10 @@ async def _call_llm(
     if reasoning_effort is not None:
         kwargs["reasoning_effort"] = reasoning_effort
     client = _get_client()
-    response = await client.chat.completions.create(**kwargs)
+    response = await client.chat.completions.create(
+        **kwargs,
+        extra_body={"thinking": {"enabled": False}},
+    )
     content = response.choices[0].message.content
     if content is None:
         raise ValueError("LLM returned null content")
