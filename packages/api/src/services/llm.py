@@ -28,12 +28,20 @@ METADATA_JSON_SCHEMA = {
             "tags": {
                 "type": "array",
                 "items": {
-                    "type": "string",
+                "type": "string",
+                "enum": [
+                    "news", "tutorial", "guide", "paper", "tool", "library", "course", "opinion", "comparison", "demo",
+                    "llm", "agents", "rag", "prompt-engineering", "fine-tuning", "evaluation", "embeddings", "multimodal", "image-generation", "video-generation", "voice", "computer-vision", "reasoning", "safety",
+                    "claude", "gpt", "gemini", "llama", "open-source",
+                    "mcp", "langchain", "huggingface", "api",
+                    "coding", "productivity", "automation", "research", "writing", "chatbot",
+                    "business", "ethics"
+                ]
                 },
                 "minItems": 3,
                 "maxItems": 5,
-                "description": "Relevant tags for categorizing the link (3-5 tags)",
-            },
+                "description": "Relevant tags chosen exclusively from the allowed enum values (3-5 tags)"
+            }
         },
         "required": ["title", "description", "tags"],
         "additionalProperties": False,
@@ -45,7 +53,13 @@ SYSTEM_PROMPT = """You are a link metadata generator. Your task is to analyze a 
 Given the URL and source type, produce:
 - A concise title (max 100 characters)
 - A brief description (max 300 characters) that summarizes what the link is about
-- 3-5 relevant tags for categorization
+- 3-5 relevant tags for categorization, chosen ONLY from the allowed list defined in the schema
+
+STRICT RULES FOR TAGS:
+- You MUST select tags ONLY from the allowed enum values in the schema.
+- Do NOT invent, translate, or modify tags.
+- Choose only tags that are genuinely relevant to the content.
+- Combine dimensions when useful (e.g. content type + topic + tech), like: ["tutorial", "rag", "langchain"].
 
 Respond ONLY with valid JSON matching the provided schema. Do not include any text outside the JSON object. Always respond in English."""
 
@@ -62,7 +76,6 @@ def _get_client() -> AsyncOpenAI:
 
 async def generate_link_metadata(
     url: str,
-    source: str,
     max_retries: int = 3,
 ) -> dict[str, Any] | None:
     """Generate title, description, and tags for a link using LLM.
@@ -72,7 +85,7 @@ async def generate_link_metadata(
     """
     client = _get_client()
 
-    user_prompt = f"URL: {url}\nSource: {source}"
+    user_prompt = f"URL: {url}"
 
     for attempt in range(1, max_retries + 1):
         try:
@@ -88,6 +101,7 @@ async def generate_link_metadata(
                 },
                 temperature=0.3,
                 max_tokens=500,
+                extra_body={"chat_template_kwargs": {"enable_thinking": False}}
             )
 
             content = response.choices[0].message.content

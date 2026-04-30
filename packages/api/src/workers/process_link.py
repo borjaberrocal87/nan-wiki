@@ -43,7 +43,7 @@ async def process_link(db: AsyncSession, link: Link) -> None:
     logger.info("Processing link %s (URL: %s, retry_count: %d)", link_id, url, link.retry_count)
 
     # Step 2: Generate metadata
-    metadata = await generate_link_metadata(url, link.source_id)
+    metadata = await generate_link_metadata(url)
 
     if metadata is None:
         await _mark_failed(db, link, "LLM metadata generation failed")
