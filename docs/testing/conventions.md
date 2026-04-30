@@ -2,126 +2,62 @@
 
 ## 💡 Convention
 
-Tests follow a pragmatic approach using framework-native mocking, not hand-written mock objects or object mothers. Each package uses its own testing stack:
+Tests use **mock objects** (hand-written implementations of domain interfaces with `should*` methods) and **object mothers** (factories with partial overrides for test data). Each package uses its own testing stack:
 
-- **Bot & Shared** (TypeScript): Vitest with `vi.mock()` for module mocking, inline mock objects via `vi.fn()`, and `beforeEach/vi.clearAllMocks` for cleanup.
-- **API** (Python): Pytest with `unittest.mock.patch` for dependency injection, `MagicMock`/`AsyncMock` for mocks, and `conftest.py` with `autouse` fixtures for env var isolation.
-- **Web** (TypeScript/React): Vitest + React Testing Library for component tests, `vi.mock()` for module mocking, and inline mocks for hooks.
+- **Bot & Shared** (TypeScript): Vitest with `vi.fn()` inside mock objects, mothers in `src/__test_utils__/`
+- **API** (Python): Pytest with `MagicMock` inside mock objects, mothers in `tests/mothers/` and mocks in `tests/mocks/`
+- **Web** (TypeScript/React): Vitest + React Testing Library, mock objects + mothers for dependencies
 
-Tests live alongside source code in `__tests__/` subdirectories for TypeScript files, and in a top-level `tests/` directory for Python.
+Tests live in `__tests__/` subdirectories alongside TypeScript source files, and in a top-level `tests/` directory for Python.
+
+## 📦 Quick reference
+
+| Pattern | When to use | Docs |
+|---------|-------------|------|
+| **Mock objects** | Any test that depends on an interface (DB, LLM, gateway, service) | [mock-objects.md](mock-objects.md) |
+| **Object mothers** | Any test that creates domain/ORM objects as data | [object-mothers.md](object-mothers.md) |
+| **Pure function tests** | Tests for functions with no dependencies (URL parsing, validation, formatting) | No mocks needed — just call the function and assert |
 
 ## 🏆 Benefits
 
-- **Less boilerplate**: No need to write separate mock classes or object mothers — `vi.mock()` and `MagicMock` are faster to write and maintain.
-- **Framework idiomatic**: Uses the native mocking APIs of Vitest and Pytest, which are well-documented and widely understood.
-- **Co-located**: Tests next to source code (TypeScript) make it easy to find what to test alongside the implementation.
-- **Simple setup**: No ceremony — `beforeEach` + `vi.clearAllMocks()` or `@patch` decorators are enough.
+- **Domain contracts**: Tests verify behavior through interfaces, not framework-specific mock APIs.
+- **Readable setup**: `should*` methods make test setup read like a specification.
+- **Centralized data**: Object mothers eliminate inline object construction across tests.
+- **Reusable**: Mock objects and mothers are shared across all tests for the same interface/object.
+- **Framework agnostic**: Swapping the assertion library only requires changing the mock/mother, not every test.
 
 ## 👀 Examples
 
-### ✅ Good: Vitest with `vi.mock()` and inline mocks
+### Mock object + mother pattern (complete example)
 
 ```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+// In the test file
+import { describe, it, expect, beforeEach } from 'vitest';
 import { handleMessageCreate } from '../events/messageCreate.js';
-
-vi.mock('../services/db.js', () => ({
-  prisma: {
-    user: { upsert: vi.fn() },
-    channel: { upsert: vi.fn() },
-    link: { create: vi.fn() },
-  },
-}));
-
-vi.mock('../services/linkDetector.js', () => ({
-  detectUrls: vi.fn(),
-}));
-
-import { prisma } from '../services/db.js';
-import { detectUrls } from '../services/linkDetector.js';
+import { MockPrismaGateway } from '../__test_utils__/MockPrismaGateway.js';
+import { MessageMother } from '../__test_utils__/MessageMother.js';
 
 describe('messageCreate', () => {
+  let prisma: MockPrismaGateway;
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    (detectUrls as any).mockReturnValue([]);
+    prisma = new MockPrismaGateway();
   });
 
-  it('detects and saves a single URL', async () => {
-    const mockMessage = {
-      author: { id: '123', username: 'testuser' },
+  it('saves a link when URL is detected', async () => {
+    const mockMessage = MessageMother.create({
       content: 'https://github.com/user/repo',
-      channel: { id: '456', name: 'general' },
-      guildId: '789',
-      id: 'message-id',
-      createdTimestamp: Date.now(),
-    };
+    });
 
-    (detectUrls as any).mockReturnValue([
-      { url: 'https://github.com/user/repo', domain: 'github.com', sourceId: 'github' },
-    ]);
-    (prisma.link.create as any).mockResolvedValue({});
+    prisma.shouldUpsertSource('github');
+    prisma.shouldCreateLink({ url: 'https://github.com/user/repo', sourceId: 'github' });
 
-    await handleMessageCreate(mockMessage as any);
-
-    expect(prisma.link.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          url: 'https://github.com/user/repo',
-          sourceId: 'github',
-        }),
-      })
-    );
+    await handleMessageCreate(mockMessage, prisma);
   });
 });
 ```
 
-### ✅ Good: Pytest with `@patch` and `MagicMock`
-
-```python
-from unittest.mock import AsyncMock, MagicMock, patch
-import pytest
-from src.services.llm import generate_link_metadata
-
-class TestGenerateLinkMetadata:
-    @pytest.mark.asyncio
-    async def test_returns_metadata_on_success(self):
-        mock_choice = MagicMock()
-        mock_choice.message.content = json.dumps({
-            "title": "Test Title",
-            "description": "Test Description",
-            "tags": ["tag1", "tag2"],
-        })
-        mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
-
-        mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
-
-        with patch("src.services.llm._get_client", return_value=mock_client):
-            result = await generate_link_metadata("https://example.com")
-
-        assert result["title"] == "Test Title"
-        assert result["tags"] == ["tag1", "tag2"]
-
-    @pytest.mark.asyncio
-    async def test_returns_none_on_api_error(self):
-        api_error = APIError(
-            request=MagicMock(),
-            message="Rate limit",
-            body=None,
-        )
-        api_error.status_code = 429
-
-        mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(side_effect=api_error)
-
-        with patch("src.services.llm._get_client", return_value=mock_client):
-            result = await generate_link_metadata("https://example.com", max_retries=1)
-
-        assert result is None
-```
-
-### ✅ Good: Pure function tests with no mocks
+### Pure function test (no mocks needed)
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -129,89 +65,27 @@ import { detectUrls } from './linkDetector.js';
 
 describe('detectUrls', () => {
   it('detects a single github URL', () => {
-    const result = detectUrls('Check this out: https://github.com/user/repo');
+    const result = detectUrls('Check this: https://github.com/user/repo');
     expect(result).toHaveLength(1);
-    expect(result[0].url).toBe('https://github.com/user/repo');
-    expect(result[0].domain).toBe('github.com');
     expect(result[0].sourceId).toBe('github');
-  });
-
-  it('returns empty array for no URLs', () => {
-    const result = detectUrls('Just some text without any links');
-    expect(result).toHaveLength(0);
   });
 });
 ```
 
-### ❌ Bad: Hand-written mock objects (as documented in the old `mock-objects.md`)
-
-```typescript
-// DON'T do this — too much boilerplate for no benefit
-import { LinkRepository } from "../../domain/LinkRepository";
-
-export class MockLinkRepository implements LinkRepository {
-  private readonly mockSave = jest.fn();
-  private readonly mockFindAll = jest.fn();
-
-  async save(link: Link): Promise<void> {
-    expect(this.mockSave).toHaveBeenCalledWith(link.toPrimitives());
-    return Promise.resolve();
-  }
-
-  shouldSave(link: Link): void {
-    this.mockSave(link.toPrimitives());
-  }
-
-  async findAll(): Promise<Link[]> {
-    return this.mockFindAll() as Promise<Link[]>;
-  }
-
-  shouldFindAllReturn(links: Link[]): void {
-    this.mockFindAll.mockReturnValue(links);
-  }
-}
-```
-
-### ❌ Bad: Object Mothers with `@faker-js/faker`
-
-```python
-# DON'T do this — unnecessary abstraction for this codebase
-class LinkMother:
-    @staticmethod
-    def create(**kwargs) -> Link:
-        return Link(
-            id=faker.uuid4(),
-            url=faker.url(),
-            domain=faker.domain_name(),
-            title=faker.sentence(),
-            **kwargs,
-        )
-```
-
-### ❌ Bad: Inline mocks without `vi.mock()` / `@patch`
-
-```typescript
-// DON'T do this — manual mock objects are harder to maintain
-const mockPrisma = {
-  user: { upsert: jest.fn() },
-  link: { create: jest.fn() },
-} as any;
-
-// No module isolation — the real prisma is still imported by the SUT
-```
-
 ## 🧐 Real world examples
 
-- `packages/bot/src/events/messageCreate.test.ts` — `vi.mock()` for Prisma and linkDetector
+- `packages/bot/src/__test_utils__/MockPrismaGateway.ts` — mock object for Prisma
+- `packages/bot/src/__test_utils__/MessageMother.ts` — object mother for Discord messages
+- `packages/api/tests/mocks/MockAsyncSession.py` — mock object for SQLAlchemy session
+- `packages/api/tests/mothers/LinkMother.py` — object mother for Link ORM objects
+- `packages/shared/tests/utils.test.ts` — pure function tests, no mocks
 - `packages/bot/src/services/linkDetector.test.ts` — pure function tests, no mocks
-- `packages/api/tests/test_llm_service.py` — `@patch` + `MagicMock`/`AsyncMock`
-- `packages/api/tests/test_nl2sql_pipeline.py` — custom mock classes (`_MockPool`) for complex async patterns
-- `packages/api/tests/conftest.py` — `autouse` fixture for env var isolation
-- `packages/shared/tests/utils.test.ts` — pure function tests
 
 ## 🔗 Related agreements
 
-- [Testing Epic 007](epics/007-testing.md) — full test coverage plan
-- [Documentation Standard](documentation-guidelines.md) — how convention docs should be structured
+- [Mock Objects for Testing](mock-objects.md)
+- [Object Mothers for Testing](object-mothers.md)
+- [Documentation Standard](../documentation-guidelines.md)
+- [Testing Epic 007](../epics/007-testing.md) — full test coverage plan
 
 Doc created by 🐢 💨 (Turbotuga™, [Codely](https://codely.com)'s mascot)
