@@ -86,6 +86,7 @@ docs/
 │   ├── 005-busqueda-chatbot.md
 │   └── 006-pulido-deploy.md
 └── testing/
+    ├── conventions.md              # Testing conventions (vi.mock, MagicMock, pure function tests)
     ├── mock-objects.md
     └── object-mothers.md
 ```
