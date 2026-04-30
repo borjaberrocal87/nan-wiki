@@ -225,6 +225,43 @@ export default function ChatWindow({
   );
 }
 
+function renderContent(text: string): React.ReactNode {
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  const lines = text.split('\n');
+  const result: React.ReactNode[] = [];
+
+  lines.forEach((line, lineIndex) => {
+    const urlParts = line.split(urlRegex);
+    urlParts.forEach((part, partIndex) => {
+      if (urlRegex.test(part)) {
+        result.push(
+          <a
+            key={`url-${lineIndex}-${partIndex}`}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: 'var(--accent-primary)',
+              textDecoration: 'underline',
+              textDecorationColor: 'var(--border-color)',
+              wordBreak: 'break-all',
+            }}
+          >
+            {part}
+          </a>
+        );
+      } else if (part) {
+        result.push(<span key={`text-${lineIndex}-${partIndex}`}>{part}</span>);
+      }
+    });
+    if (lineIndex < lines.length - 1) {
+      result.push(<br key={`br-${lineIndex}`} />);
+    }
+  });
+
+  return result;
+}
+
 function renderSQL(text: string): React.ReactNode {
   const sqlBlockRegex = /```sql\n([\s\S]*?)```/g;
   const parts: React.ReactNode[] = [];
@@ -236,12 +273,7 @@ function renderSQL(text: string): React.ReactNode {
     if (match.index > lastIndex) {
       parts.push(
         <span key={`text-${partIndex++}`}>
-          {text.slice(lastIndex, match.index).split('\n').map((line, i) => (
-            <React.Fragment key={`line-${i}`}>
-              {i > 0 && <br />}
-              {line}
-            </React.Fragment>
-          ))}
+          {renderContent(text.slice(lastIndex, match.index))}
         </span>
       );
     }
@@ -271,12 +303,7 @@ function renderSQL(text: string): React.ReactNode {
   if (lastIndex < text.length) {
     parts.push(
       <span key={`text-${partIndex++}`}>
-        {text.slice(lastIndex).split('\n').map((line, i) => (
-          <React.Fragment key={`line-${i}`}>
-            {i > 0 && <br />}
-            {line}
-          </React.Fragment>
-        ))}
+        {renderContent(text.slice(lastIndex))}
       </span>
     );
   }

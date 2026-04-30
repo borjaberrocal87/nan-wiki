@@ -59,7 +59,7 @@ def _extract_sql_and_assumptions(raw: str) -> tuple[str, list[str], bool]:
 
     for line in lines:
         stripped = line.strip().lower()
-        if stripped.startswith("-- refused") or stripped.startswith("-- i can't"):
+        if stripped.startswith("-- refused") or stripped.startswith("-- refusal") or stripped.startswith("-- i can't"):
             return block, assumptions, True
 
     clean_lines = []
@@ -355,12 +355,12 @@ async def answer_stream(question: str):
         result.assumptions = assumptions
 
         if refused:
-            yield {"type": "error", "message": "I couldn't generate a query for that question. Please try rephrasing."}
+            yield {"type": "chunk", "content": "I couldn't generate a query for that question. Please try rephrasing."}
             yield {"type": "done"}
             return
 
         if not sql.strip():
-            yield {"type": "error", "message": "I couldn't understand your question. Please try rephrasing."}
+            yield {"type": "chunk", "content": "I couldn't understand your question. Please try rephrasing."}
             yield {"type": "done"}
             return
 
