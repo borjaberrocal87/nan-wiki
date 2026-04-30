@@ -151,6 +151,19 @@ export default function ChatWindow({
               }}
             >
               {msg.role === 'user' ? msg.content : renderSQL(msg.content)}
+              {isStreaming && i === displayMessages.length - 1 && msg.role === 'assistant' && (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '2px',
+                    height: '16px',
+                    backgroundColor: 'var(--accent-primary)',
+                    marginLeft: '2px',
+                    animation: 'typing 1s infinite',
+                    verticalAlign: 'middle',
+                  }}
+                />
+              )}
             </div>
           </div>
 
@@ -172,53 +185,6 @@ export default function ChatWindow({
           )}
         </div>
       ))}
-
-      {isStreaming && displayMessages.length > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-start',
-            gap: '10px',
-            marginBottom: '16px',
-          }}
-        >
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--accent-primary-container)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <span className="material-symbols-outlined text-sm">database</span>
-          </div>
-          <div
-            style={{
-              padding: '10px 14px',
-              borderRadius: '16px 16px 16px 4px',
-              backgroundColor: 'var(--bg-surface-container-high)',
-              color: 'var(--text-primary)',
-              fontSize: '14px',
-              lineHeight: '1.5',
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-block',
-                width: '2px',
-                height: '16px',
-                backgroundColor: 'var(--accent-primary)',
-                marginLeft: '2px',
-                animation: 'typing 1s infinite',
-              }}
-            />
-          </div>
-        </div>
-      )}
 
       <div ref={messagesEndRef} />
     </div>
