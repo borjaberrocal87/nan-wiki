@@ -69,12 +69,14 @@ async def _call_llm(
     temperature: float = 0.0,
     max_tokens: int = 2048,
     reasoning_effort: str | None = None,
+    enable_thinking: bool = False,
 ) -> str:
     kwargs: dict[str, Any] = {
         "model": model,
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,
+        "extra_body": {"chat_template_kwargs": {"enable_thinking": enable_thinking}},
     }
     if reasoning_effort is not None:
         kwargs["reasoning_effort"] = reasoning_effort
