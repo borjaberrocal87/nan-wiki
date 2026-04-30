@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 _PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 _NL2SQL_SYSTEM_TEMPLATE = (_PROMPTS_DIR / "nl2sql.system.md").read_text()
+_ROWS2NL_SYSTEM_TEMPLATE = (_PROMPTS_DIR / "rows2nl.system.md").read_text()
 _SCHEMA_SQL = (_PROMPTS_DIR / "schema.sql").read_text()
 
 _DEFAULT_NL2SQL_MODEL = "claude-sonnet-4-20250514"
@@ -28,6 +30,13 @@ _DEFAULT_NL2SQL_MODEL = "claude-sonnet-4-20250514"
 def _get_model(var: str, fallback: str) -> str:
     val = getattr(settings, var, None)
     return val if val else fallback
+
+
+def _json_serializer(obj: Any) -> str:
+    """Serialize non-JSON-native types (datetime, etc.)."""
+    if hasattr(obj, "isoformat"):
+        return obj.isoformat()
+    return str(obj)
 
 
 def _extract_sql_and_assumptions(raw: str) -> tuple[str, list[str], bool]:
@@ -158,36 +167,36 @@ def _format_rows_as_table(rows: list[dict], row_count: int, truncated: bool) -> 
     return result
 
 
-def _format_rows_as_table(rows: list[dict], row_count: int, truncated: bool) -> str:
-    """Format SQL result rows as a text table."""
-    if not rows:
-        return "No results found."
+async def _format_rows_as_nl(
+    rows: list[dict],
+    row_count: int,
+    truncated: bool,
+    sql: str,
+    assumptions: list[str],
+    question: str,
+    error: str | None = None,
+    model: str = _DEFAULT_NL2SQL_MODEL,
+) -> str:
+    """Generate a natural-language answer from SQL query results using the LLM."""
+    payload = {
+        "question": question,
+        "sql": sql,
+        "assumptions": assumptions,
+        "rows": rows,
+        "row_count": row_count,
+        "truncated": truncated,
+        "error": error,
+    }
+    user_message = json.dumps(payload, ensure_ascii=False, default=_json_serializer)
 
-    columns = list(rows[0].keys())
-    column_widths = {col: len(col) for col in columns}
+    system = _ROWS2NL_SYSTEM_TEMPLATE
+    messages: list[ChatCompletionMessageParam] = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user_message},
+    ]
 
-    for row in rows:
-        for col in columns:
-            value = str(row.get(col, ""))
-            column_widths[col] = max(column_widths[col], len(value))
-
-    header = " | ".join(col.ljust(column_widths[col]) for col in columns)
-    separator = "-+-".join("-" * column_widths[col] for col in columns)
-
-    lines = [header, separator]
-    for row in rows:
-        line = " | ".join(
-            str(row.get(col, "")).ljust(column_widths[col]) for col in columns
-        )
-        lines.append(line)
-
-    result = "\n".join(lines)
-    if truncated:
-        result += f"\n\n... (truncated at {row_count} rows)"
-    else:
-        result += f"\n\n{row_count} row(s)"
-
-    return result
+    response = await _call_llm(model, messages, temperature=0.3, max_tokens=1024)
+    return response.strip()
 
 
 @dataclass
@@ -287,9 +296,9 @@ async def answer(question: str) -> AnswerResult:
         result.truncated = truncated
         logger.info("SQL executed: %d rows (count: %d, truncated: %s)", len(rows), row_count, truncated)
 
-        # ── Stage 4: Format rows as table ──────────────────────────────────
+        # ── Stage 4: Format rows as NL ─────────────────────────────────────
         t0 = asyncio.get_event_loop().time()
-        result.answer = _format_rows_as_table(rows, row_count, truncated)
+        result.answer = await _format_rows_as_nl(rows, row_count, truncated, sql, assumptions, question, model=model1)
         timings["format"] = asyncio.get_event_loop().time() - t0
 
     except (APIError, ValueError) as e:
@@ -407,14 +416,14 @@ async def answer_stream(question: str):
         # Emit row count chunk so frontend shows "found X results..."
         yield {"type": "rows", "count": row_count, "truncated": truncated}
 
-        # ── Stage 4: Format rows as table ──────────────────────────────────
+        # ── Stage 4: Format rows as NL ─────────────────────────────────────
         t0 = asyncio.get_event_loop().time()
-        table_text = _format_rows_as_table(rows, row_count, truncated)
+        nl_answer = await _format_rows_as_nl(rows, row_count, truncated, sql, assumptions, question, model=model1)
         timings["format"] = asyncio.get_event_loop().time() - t0
 
-        # Stream the table text as a single chunk
-        yield {"type": "chunk", "content": table_text}
-        result.answer = table_text
+        # Stream the NL answer as a single chunk
+        yield {"type": "chunk", "content": nl_answer}
+        result.answer = nl_answer
 
     except (APIError, ValueError) as e:
         yield {"type": "error", "message": "Sorry, I encountered an error generating a response. Please try again."}
@@ -472,7 +481,7 @@ async def _retry_stage1(
         result.row_count = row_count
         result.truncated = truncated
 
-        result.answer = _format_rows_as_table(rows, row_count, truncated)
+        result.answer = await _format_rows_as_nl(rows, row_count, truncated, sql, assumptions, question, model=model1)
 
     except (APIError, ValueError) as e:
         result.error = f"LLM error: {e}"
