@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from datetime import datetime as datetime_now
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -130,22 +129,23 @@ class TestLinkService:
             url="https://github.com/test/repo",
             domain="github.com",
             source_id="github",
-            source_name="GitHub",
             posted_at=datetime.now(UTC),
             llm_status="done",
             title="Test Repo",
             description="A test repository",
             created_at=datetime.now(UTC),
-            updated_at=datetime_now(UTC),
+            updated_at=datetime.now(UTC),
         )
 
     @pytest.mark.asyncio
     async def test_list_links_filters_by_source_id(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
-        mock_db.execute = AsyncMock(return_value=result_mock)
+        total_mock = MagicMock()
+        total_mock.all.return_value = [mock_link.id]
+        mock_db.execute = AsyncMock(side_effect=[total_mock, result_mock])
 
         service = LinkService(mock_db)
         filters = {"source_id": "github", "page": 1, "per_page": 20}
@@ -159,9 +159,11 @@ class TestLinkService:
     async def test_list_links_filters_by_tag_ids(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.all.return_value = [(mock_link, None, "GitHub", [{"id": "tag-uuid-1", "name": "python"}])]
-        mock_db.execute = AsyncMock(return_value=result_mock)
+        total_mock = MagicMock()
+        total_mock.all.return_value = [mock_link.id]
+        mock_db.execute = AsyncMock(side_effect=[total_mock, result_mock])
 
         service = LinkService(mock_db)
         filters = {"tag_ids": ["tag-uuid-1", "tag-uuid-2"], "page": 1, "per_page": 20}
@@ -174,22 +176,23 @@ class TestLinkService:
     async def test_list_links_pagination(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
-        result_mock.scalars().all.return_value = [mock_link]
-        result_mock.all.return_value = [mock_link.id]
-        mock_db.execute = AsyncMock(return_value=result_mock)
+        result_mock = MagicMock()
+        result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
+        total_mock = MagicMock()
+        total_mock.all.return_value = [mock_link.id]
+        mock_db.execute = AsyncMock(side_effect=[total_mock, result_mock])
 
         service = LinkService(mock_db)
         filters = {"page": 2, "per_page": 10}
         links, total = await service.list(filters)
 
-        result_mock.scalars().all.assert_called_once()
+        result_mock.all.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_get_by_id_found(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = mock_link
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -203,7 +206,7 @@ class TestLinkService:
     async def test_get_by_id_not_found(self, mock_db):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = None
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -218,7 +221,7 @@ class TestLinkService:
 
         github_source = Source(id="github", name="GitHub")
         twitter_source = Source(id="twitter", name="Twitter")
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalars().all.return_value = [github_source, twitter_source]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -233,10 +236,12 @@ class TestLinkService:
     async def test_list_links_empty_result(self, mock_db):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalars().all.return_value = []
         result_mock.all.return_value = []
-        mock_db.execute = AsyncMock(return_value=result_mock)
+        total_mock = MagicMock()
+        total_mock.all.return_value = []
+        mock_db.execute = AsyncMock(side_effect=[total_mock, result_mock])
 
         service = LinkService(mock_db)
         filters = {"source_id": "nonexistent", "page": 1, "per_page": 20}
@@ -249,10 +254,11 @@ class TestLinkService:
     async def test_list_links_filters_by_domain(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
-        result_mock.scalars().all.return_value = [mock_link]
-        result_mock.all.return_value = [mock_link.id]
-        mock_db.execute = AsyncMock(return_value=result_mock)
+        result_mock = MagicMock()
+        result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
+        total_mock = MagicMock()
+        total_mock.all.return_value = [mock_link.id]
+        mock_db.execute = AsyncMock(side_effect=[total_mock, result_mock])
 
         service = LinkService(mock_db)
         filters = {"domain": "github.com", "page": 1, "per_page": 20}
@@ -265,10 +271,11 @@ class TestLinkService:
     async def test_list_links_filters_by_author(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
-        result_mock.scalars().all.return_value = [mock_link]
-        result_mock.all.return_value = [mock_link.id]
-        mock_db.execute = AsyncMock(return_value=result_mock)
+        result_mock = MagicMock()
+        result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
+        total_mock = MagicMock()
+        total_mock.all.return_value = [mock_link.id]
+        mock_db.execute = AsyncMock(side_effect=[total_mock, result_mock])
 
         service = LinkService(mock_db)
         filters = {"author_id": 12345, "page": 1, "per_page": 20}

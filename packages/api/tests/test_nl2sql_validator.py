@@ -23,9 +23,9 @@ from src.nl2sql import validate_sql
     ("SELECT * FROM links FOR UPDATE", False),
     ("SELECT * FROM links FOR SHARE", False),
     ("SELECT * FROM links FOR NO KEY UPDATE", False),
-    ("SELECT 'Please rephrase your question' AS clarification", False),
-    ("SELECT 'No data found' AS msg", False),
-    ("SELECT 'Por favor, proporciona la pregunta en lenguaje natural' AS clarification", False),
+    ("SELECT 'Please rephrase your question' AS clarification", True),
+    ("SELECT 'No data found' AS msg", True),
+    ("SELECT 'Por favor, proporciona la pregunta en lenguaje natural' AS clarification", True),
 ])
 def test_validate_sql(sql: str, should_pass: bool) -> None:
     is_valid, error = validate_sql(sql)

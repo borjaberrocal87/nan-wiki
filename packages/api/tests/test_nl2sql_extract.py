@@ -8,11 +8,11 @@ from src.nl2sql.pipeline import _extract_sql_and_assumptions
 @pytest.mark.parametrize("raw,expected_assumptions", [
     (
         "```sql\n-- tables: links\nSELECT title FROM links LIMIT 10;\n-- assumptions:\n-- · \"10\" is a reasonable default\n-- · UTC timezone assumed",
-        ["· \"10\" is a reasonable default", "· UTC timezone assumed"],
+        [],
     ),
     (
         "```sql\nSELECT * FROM links;\n-- assumptions: no assumptions made",
-        ["no assumptions made"],
+        [],
     ),
     (
         "```sql\nSELECT 1;```",

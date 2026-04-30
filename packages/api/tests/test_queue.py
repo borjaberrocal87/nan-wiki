@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import Link
-from src.workers.queue import POLL_QUERY, _fetch_pending_link
+from src.workers.queue import _fetch_pending_link
 
 
 class TestFetchPendingLink:
@@ -31,7 +31,7 @@ class TestFetchPendingLink:
 
     @pytest.mark.asyncio
     async def test_returns_link_when_pending(self, mock_db, mock_link, mocker):
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = mock_link
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -47,7 +47,7 @@ class TestFetchPendingLink:
         mock_link.llm_status = "failed"
         mock_link.retry_count = 2
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = mock_link
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -58,7 +58,7 @@ class TestFetchPendingLink:
 
     @pytest.mark.asyncio
     async def test_returns_none_when_no_pending_links(self, mock_db):
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = None
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -70,7 +70,7 @@ class TestFetchPendingLink:
     async def test_respects_max_retries_filter(self, mock_db, mock_link):
         mock_link.retry_count = 10  # Should be filtered out
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = None
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -82,14 +82,20 @@ class TestFetchPendingLink:
 
     @pytest.mark.asyncio
     async def test_query_contains_skip_locked(self):
-        assert "SKIP LOCKED" in POLL_QUERY
-        assert "FOR UPDATE" in POLL_QUERY
+        import inspect
+        source = inspect.getsource(_fetch_pending_link)
+        assert "SKIP LOCKED" in source
+        assert "FOR UPDATE" in source
 
     @pytest.mark.asyncio
     async def test_query_filters_pending_and_failed(self):
-        assert "'pending'" in POLL_QUERY
-        assert "'failed'" in POLL_QUERY
+        import inspect
+        source = inspect.getsource(_fetch_pending_link)
+        assert "'pending'" in source
+        assert "'failed'" in source
 
     @pytest.mark.asyncio
     async def test_query_orders_by_posted_at_asc(self):
-        assert "ORDER BY posted_at ASC" in POLL_QUERY
+        import inspect
+        source = inspect.getsource(_fetch_pending_link)
+        assert "ORDER BY posted_at ASC" in source

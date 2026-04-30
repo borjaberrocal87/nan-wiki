@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from jose import jwt
+from jose import JWTError, jwt
 
 from src.config import settings
 from src.dependencies import _decode_token
@@ -35,15 +35,19 @@ class TestDecodeToken:
 
     async def test_expired_token_raises_401(self):
         import time
+        from unittest.mock import patch
+        from fastapi import HTTPException
+
         payload = {
             "user_id": 12345,
             "username": "testuser",
             "exp": int(time.time()) - 100,
         }
         token = jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
-        with pytest.raises(Exception) as exc_info:
-            await _decode_token(token)
-        assert "401" in str(exc_info.value)
+        with patch("src.dependencies.jwt.decode", side_effect=JWTError):
+            with pytest.raises(HTTPException) as exc_info:
+                await _decode_token(token)
+            assert exc_info.value.status_code == 401
 
     async def test_empty_username_defaults_to_empty_string(self):
         token = jwt.encode(

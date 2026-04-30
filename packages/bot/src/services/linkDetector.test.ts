@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectUrls } from './linkDetector.js';
+import { detectUrls, type DetectedUrl } from './linkDetector.js';
 
 describe('detectUrls', () => {
   it('detects a single github URL', () => {

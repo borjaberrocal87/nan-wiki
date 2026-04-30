@@ -111,7 +111,6 @@ class TestListLinks:
             url="https://github.com/test/repo",
             domain="github.com",
             source_id="github",
-            source_name="GitHub",
             posted_at=datetime.now(UTC),
             llm_status="done",
             title="Test Repo",
@@ -124,7 +123,7 @@ class TestListLinks:
     async def test_list_links_returns_paginated_response(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -141,7 +140,7 @@ class TestListLinks:
 
     @pytest.mark.asyncio
     async def test_list_links_empty_result(self, mock_db):
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.all.return_value = []
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -153,7 +152,7 @@ class TestListLinks:
 
     @pytest.mark.asyncio
     async def test_list_links_with_source_filter(self, mock_db, mock_link):
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.all.return_value = [(mock_link, None, "GitHub", [])]
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -176,7 +175,6 @@ class TestGetLink:
             url="https://github.com/test/repo",
             domain="github.com",
             source_id="github",
-            source_name="GitHub",
             posted_at=datetime.now(UTC),
             llm_status="done",
             title="Test Repo",
@@ -188,7 +186,9 @@ class TestGetLink:
     async def test_get_link_returns_link_detail(self, mock_db, mock_link):
         from src.services.link_service import LinkService
 
-        result_mock = AsyncMock()
+        mock_link.source_name = "GitHub"
+
+        result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = mock_link
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -201,7 +201,7 @@ class TestGetLink:
 
     @pytest.mark.asyncio
     async def test_get_link_returns_none_when_not_found(self, mock_db):
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one_or_none.return_value = None
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -224,8 +224,10 @@ class TestGetSources:
             Source(id="twitter", name="Twitter"),
             Source(id="youtube", name="YouTube"),
         ]
-        result_mock = AsyncMock()
-        result_mock.scalars().all.return_value = sources
+        result_mock = MagicMock()
+        scalars_mock = MagicMock()
+        scalars_mock.all.return_value = sources
+        result_mock.scalars.return_value = scalars_mock
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         response = await get_sources(mock_db)
@@ -239,8 +241,10 @@ class TestGetSources:
 
     @pytest.mark.asyncio
     async def test_get_sources_empty(self, mock_db):
-        result_mock = AsyncMock()
-        result_mock.scalars().all.return_value = []
+        result_mock = MagicMock()
+        scalars_mock = MagicMock()
+        scalars_mock.all.return_value = []
+        result_mock.scalars.return_value = scalars_mock
         mock_db.execute = AsyncMock(return_value=result_mock)
 
         response = await get_sources(mock_db)

@@ -16,7 +16,6 @@ vi.mock('../client.js', () => ({
 
 vi.mock('../services/linkDetector.js', () => ({
   detectUrls: vi.fn(),
-  DetectedUrl: vi.fn(),
 }));
 
 import { prisma } from '../services/db.js';
@@ -25,18 +24,23 @@ import { detectUrls } from '../services/linkDetector.js';
 describe('messageCreate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.resetModules();
-    // The rate limit map is internal to messageCreate, cleared on module reload
+    (detectUrls as any).mockReturnValue([]);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  function createMockMessage(overrides = {}) {
+  let messageCounter = 0;
+  function createMockMessage(overrides = {}, { uniqueId = true } = {}) {
+    if (uniqueId) messageCounter++;
+    const userId = uniqueId ? `123456789${messageCounter}` : '123456789';
+    const channelId = uniqueId ? `987654321${messageCounter}` : '987654321';
+    const guildId = uniqueId ? `111222333${messageCounter}` : '111222333';
+    const messageId = uniqueId ? `555666777${messageCounter}` : '555666777';
     return {
       author: {
-        id: '123456789',
+        id: userId,
         username: 'testuser',
         tag: 'testuser#0000',
         avatar: 'avatar_hash',
@@ -44,13 +48,13 @@ describe('messageCreate', () => {
       },
       content: 'https://github.com/user/repo',
       channel: {
-        id: '987654321',
+        id: channelId,
         name: 'general',
         type: 'GUILD_TEXT',
       },
-      channelId: '987654321',
-      guildId: '111222333',
-      id: '555666777',
+      channelId,
+      guildId,
+      id: messageId,
       createdTimestamp: Date.now(),
       reply: vi.fn().mockResolvedValue({ delete: vi.fn() }),
       ...overrides,
@@ -82,6 +86,7 @@ describe('messageCreate', () => {
     const mockMessage = createMockMessage({
       content: 'Just some text without links',
     });
+    (detectUrls as any).mockReturnValue([]);
 
     await handleMessageCreate(mockMessage as any);
     expect(detectUrls).toHaveBeenCalledWith('Just some text without links');
@@ -113,7 +118,6 @@ describe('messageCreate', () => {
           domain: 'github.com',
           sourceId: 'github',
           llmStatus: 'pending',
-          tags: [],
         }),
       })
     );
@@ -185,10 +189,6 @@ describe('messageCreate', () => {
       { url: 'https://github.com/user/repo', domain: 'github.com', sourceId: 'github' },
     ]);
 
-    // Simulate rate limit by directly manipulating the internal map
-    // Since checkRateLimit is not exported, we test via the module reload
-    // The first call in this test suite should pass, but rapid calls would fail
-
     (prisma.user.upsert as any).mockResolvedValue({});
     (prisma.channel.upsert as any).mockResolvedValue({});
     (prisma.source.upsert as any).mockResolvedValue({});
@@ -233,7 +233,7 @@ describe('messageCreate', () => {
   });
 
   it('saves link with correct author and channel data', async () => {
-    const mockMessage = createMockMessage();
+    const mockMessage = createMockMessage({}, { uniqueId: false });
     (detectUrls as any).mockReturnValue([
       { url: 'https://github.com/user/repo', domain: 'github.com', sourceId: 'github' },
     ]);

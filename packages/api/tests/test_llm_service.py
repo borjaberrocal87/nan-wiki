@@ -23,7 +23,7 @@ class TestGetClient:
         mock_settings.EMBEDDING_MODEL = "test-embedding"
 
         client = _get_client()
-        assert client.base_url == "https://custom.api/v1"
+        assert str(client.base_url).rstrip("/") == "https://custom.api/v1"
         assert client.api_key == "test-key"
 
     @patch("src.services.llm.settings")
@@ -38,20 +38,24 @@ class TestGetClient:
 
 
 class TestBuildLinkText:
-    def test_both_title_and_description(self):
-        result = build_link_text("My Title", "My Description")
+    @pytest.mark.asyncio
+    async def test_both_title_and_description(self):
+        result = await build_link_text("My Title", "My Description")
         assert result == "My Title My Description"
 
-    def test_title_only(self):
-        result = build_link_text("My Title", None)
+    @pytest.mark.asyncio
+    async def test_title_only(self):
+        result = await build_link_text("My Title", None)
         assert result == "My Title"
 
-    def test_description_only(self):
-        result = build_link_text(None, "My Description")
+    @pytest.mark.asyncio
+    async def test_description_only(self):
+        result = await build_link_text(None, "My Description")
         assert result == "My Description"
 
-    def test_neither(self):
-        result = build_link_text(None, None)
+    @pytest.mark.asyncio
+    async def test_neither(self):
+        result = await build_link_text(None, None)
         assert result == ""
 
 
@@ -74,9 +78,7 @@ class TestGenerateLinkMetadata:
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
-            result = await generate_link_metadata(
-                "https://example.com", "blog"
-            )
+            result = await generate_link_metadata("https://example.com")
 
         assert result is not None
         assert result["title"] == "Test Title"
@@ -95,9 +97,7 @@ class TestGenerateLinkMetadata:
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
-            result = await generate_link_metadata(
-                "https://example.com", "other"
-            )
+            result = await generate_link_metadata("https://example.com")
 
         assert len(result["title"]) == 100
 
@@ -113,9 +113,7 @@ class TestGenerateLinkMetadata:
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
-            result = await generate_link_metadata(
-                "https://example.com", "other"
-            )
+            result = await generate_link_metadata("https://example.com")
 
         assert len(result["description"]) == 300
 
@@ -131,27 +129,25 @@ class TestGenerateLinkMetadata:
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
-            result = await generate_link_metadata(
-                "https://example.com", "other"
-            )
+            result = await generate_link_metadata("https://example.com")
 
         assert len(result["tags"]) == 5
 
     @pytest.mark.asyncio
     async def test_returns_none_on_api_error_after_retries(self):
-        mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(
-            side_effect=APIError(
-                request=MagicMock(),
-                message="Rate limit",
-                body=None,
-            )
+        api_error = APIError(
+            request=MagicMock(),
+            message="Rate limit",
+            body=None,
         )
+        # Ensure status_code attribute exists for the source code check
+        api_error.status_code = 429
+
+        mock_client = AsyncMock()
+        mock_client.chat.completions.create = AsyncMock(side_effect=api_error)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
-            result = await generate_link_metadata(
-                "https://example.com", "other", max_retries=2
-            )
+            result = await generate_link_metadata("https://example.com", max_retries=2)
 
         assert result is None
 
@@ -166,26 +162,22 @@ class TestGenerateLinkMetadata:
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
-            result = await generate_link_metadata(
-                "https://example.com", "other", max_retries=1
-            )
+            result = await generate_link_metadata("https://example.com", max_retries=1)
 
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_includes_source_in_prompt(self, mock_response):
+    async def test_includes_url_in_prompt(self, mock_response):
         mock_client = AsyncMock()
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
-            await generate_link_metadata(
-                "https://example.com", "github"
-            )
+            await generate_link_metadata("https://example.com")
 
         call_args = mock_client.chat.completions.create.call_args
         messages = call_args.kwargs["messages"]
         user_content = messages[1]["content"]
-        assert "github" in user_content
+        assert "https://example.com" in user_content
 
 
 class TestGenerateEmbedding:
@@ -208,14 +200,15 @@ class TestGenerateEmbedding:
 
     @pytest.mark.asyncio
     async def test_returns_none_on_api_error(self):
-        mock_client = AsyncMock()
-        mock_client.embeddings.create = AsyncMock(
-            side_effect=APIError(
-                request=MagicMock(),
-                message="Error",
-                body=None,
-            )
+        api_error = APIError(
+            request=MagicMock(),
+            message="Error",
+            body=None,
         )
+        api_error.status_code = 500
+
+        mock_client = AsyncMock()
+        mock_client.embeddings.create = AsyncMock(side_effect=api_error)
 
         with patch("src.services.llm._get_client", return_value=mock_client):
             result = await generate_embedding("test text", max_retries=1)

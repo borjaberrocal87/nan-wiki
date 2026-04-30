@@ -17,11 +17,10 @@ class TestSearchService:
     async def test_keyword_search_returns_links(self, mock_db):
         from src.services.search import SearchService
 
-        result_mock = AsyncMock()
-        count_result_mock = AsyncMock()
+        count_result_mock = MagicMock()
         count_result_mock.scalar_one.return_value = 1
 
-        data_result_mock = AsyncMock()
+        data_result_mock = MagicMock()
         data_result_mock.all.return_value = [
             (
                 "550e8400-e29b-41d4-a716-446655440000",  # id
@@ -43,7 +42,10 @@ class TestSearchService:
             ),
         ]
 
+        call_count = [0]
+
         async def execute_side_effect(*args, **kwargs):
+            call_count[0] += 1
             if "COUNT" in str(args[0]):
                 return count_result_mock
             return data_result_mock
@@ -62,7 +64,7 @@ class TestSearchService:
     async def test_keyword_search_empty_result(self, mock_db):
         from src.services.search import SearchService
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one.return_value = 0
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -76,10 +78,22 @@ class TestSearchService:
     async def test_hybrid_search_fallback_to_keyword(self, mock_db):
         from src.services.search import SearchService
 
-        # Simulate pgvector failure
-        result_mock = AsyncMock()
-        result_mock.scalar_one.return_value = 0
-        mock_db.execute = AsyncMock(return_value=result_mock)
+        # Simulate pgvector failure -> fallback to keyword
+        count_result_mock = MagicMock()
+        count_result_mock.scalar_one.return_value = 0
+
+        data_result_mock = MagicMock()
+        data_result_mock.all.return_value = []
+
+        call_count = [0]
+
+        async def execute_side_effect(*args, **kwargs):
+            call_count[0] += 1
+            if "COUNT" in str(args[0]):
+                return count_result_mock
+            return data_result_mock
+
+        mock_db.execute = AsyncMock(side_effect=execute_side_effect)
 
         svc = SearchService(mock_db)
         links, total = await svc.hybrid_search("test", embedding=[0.1] * 1024, page=1, per_page=20)
@@ -91,7 +105,7 @@ class TestSearchService:
     async def test_hybrid_search_no_embedding_falls_back(self, mock_db):
         from src.services.search import SearchService
 
-        result_mock = AsyncMock()
+        result_mock = MagicMock()
         result_mock.scalar_one.return_value = 0
         mock_db.execute = AsyncMock(return_value=result_mock)
 
@@ -126,45 +140,14 @@ class TestSearchEndpoint:
         from unittest.mock import patch
 
         from src.main import app
+        from src.routers.links import get_current_user_required, get_db
 
-        mock_result = AsyncMock()
-        count_mock = AsyncMock()
-        count_mock.scalar_one.return_value = 1
-        data_mock = AsyncMock()
-        data_mock.all.return_value = [
-            (
-                "550e8400-e29b-41d4-a716-446655440000",
-                "https://github.com/test/repo",
-                "github.com",
-                "github",
-                "testuser",
-                "GitHub",
-                "general",
-                111222,
-                "2024-01-01T00:00:00",
-                "done",
-                "Test Repo",
-                "A test repository",
-                "github",
-                "2024-01-01T00:00:00",
-                "2024-01-01T00:00:00",
-                '[]',
-            ),
-        ]
+        mock_user = type("AuthUser", (), {"user_id": 12345, "username": "testuser", "expires_at": ""})()
 
-        async def execute_side_effect(*args, **kwargs):
-            if "COUNT" in str(args[0]):
-                return count_mock
-            return data_mock
-
-        mock_db.execute = AsyncMock(side_effect=execute_side_effect)
-
-        mock_user = MagicMock()
-        mock_user.id = 12345
+        app.dependency_overrides[get_current_user_required] = lambda: mock_user
+        app.dependency_overrides[get_db] = lambda: mock_db
 
         with (
-            patch("src.routers.links.get_db", return_value=mock_db),
-            patch("src.routers.links.get_current_user_required", return_value=mock_user),
             patch("src.services.search.SearchService.hybrid_search", new_callable=AsyncMock) as mock_hybrid,
         ):
             mock_hybrid.return_value = (
@@ -206,3 +189,5 @@ class TestSearchEndpoint:
             assert data["total"] == 1
             assert len(data["data"]) == 1
             assert data["data"][0]["title"] == "Test Repo"
+
+        app.dependency_overrides.clear()

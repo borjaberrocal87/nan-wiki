@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.skip(reason="Integration test - requires real LLM and database")
 
 
 @pytest.mark.asyncio

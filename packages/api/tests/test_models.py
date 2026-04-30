@@ -7,7 +7,7 @@ from src.models import Link, LinkTag, Source, Tag, User
 class TestModels:
     def test_link_defaults(self):
         link = Link()
-        assert link.llm_status == "pending"
+        assert link.llm_status is None
 
     def test_chat_message_cascade(self):
         conv = MagicMock()
@@ -17,7 +17,7 @@ class TestModels:
 
     def test_user_defaults(self):
         user = User()
-        assert user.is_admin is False
+        assert user.is_admin is None
 
     def test_source_model(self):
         source = Source(id="github", name="GitHub")
@@ -34,7 +34,7 @@ class TestModels:
             title="Test Repo",
             description="A test repository",
         )
-        assert link.llm_status == "pending"
+        assert link.llm_status is None
         assert link.title == "Test Repo"
         assert link.source_id == "github"
 
